@@ -1,0 +1,508 @@
+import {
+  intro,
+  outro,
+  confirm,
+  select,
+  multiselect,
+  spinner,
+  cancel,
+  text,
+  log,
+  ConfirmOptions,
+  SelectOptions,
+  MultiSelectOptions,
+  TextOptions,
+} from "@clack/prompts";
+import color from "picocolors";
+import { readFile } from "node:fs/promises";
+import fs from "node:fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import mri from "mri";
+import {
+  copyTemplate,
+  createDir,
+  emptyDir,
+  formatTargetDir,
+  getPathAndNameFromTargetDir,
+  isDir,
+  isEmpty,
+  isValidPackageName,
+  logError,
+  prompt,
+  updateCreatedProject,
+} from "./functions";
+import { Template, TemplateOption } from "./types";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const { cyan, green, magenta, yellow } = color;
+
+const argv = mri<{
+  template?: string;
+  help?: boolean;
+  overwrite?: boolean;
+}>(process.argv.slice(2), {
+  alias: { h: "help", t: "template", o: "overwrite" },
+  boolean: ["help", "overwrite"],
+  string: ["template"],
+});
+
+// prettier-ignore
+const helpMessage = `\
+Usage: create-project [OPTION]... [DIRECTORY]
+
+Create a new TypeScript project.
+With no arguments, start the CLI in interactive mode.
+
+Options:
+  -h, --help                 display this help message
+  -t, --template NAME        use a specific template
+  --overwrite                overwrite previous project
+
+Available templates:
+${green       ('node           (node module)')}
+${green       ('node-server    (server)')}
+${green       ('node-cli       (command line application)')}
+${magenta     ('react          (browser)')}
+${magenta     ('react-lib      (browser)')}`;
+
+type ConfirmReturn = boolean | symbol;
+type SelectReturn<T> = symbol | T;
+type MultiSelectReturn<T> = symbol | T[];
+type TextReturn = string | symbol;
+
+const DEFAULT_PACKAGE_NAME = "my-project";
+const DEFAULT_PATH = `.${path.sep}${DEFAULT_PACKAGE_NAME}`;
+
+const OPTION_ESLINT: TemplateOption = {
+  name: "eslint",
+  label: "ESLint",
+  hint: "Configure ESLint linting.",
+};
+
+const OPTION_PRETTIER: TemplateOption = {
+  name: "prettier",
+  label: "Prettier",
+  hint: "Configure Prettier code formatter.",
+};
+
+const OPTION_EDITOR_CONFIG: TemplateOption = {
+  name: "editorconfig",
+  label: "EditorConfig",
+  hint: "Add .editorconfig file for setting consistent editor settings.",
+};
+
+const OPTION_VITEST: TemplateOption = {
+  name: "vitest",
+  label: "Vitest",
+  hint: "Add Vitest testing framework.",
+};
+
+const OPTION_GITHOOKS: TemplateOption = {
+  name: "githooks",
+  label: "Native git-hooks",
+  hint: "Configure a basic set of native git-hooks.",
+};
+
+const OPTION_HUSKY: TemplateOption = {
+  name: "husky",
+  label: "Husky",
+  hint: "Configure a basic set of git-hooks using Husky git-hook manager.",
+};
+
+const OPTION_GITHUB_ACTIONS: TemplateOption = {
+  name: "githubActions",
+  label: "GitHub Actions",
+  hint: "Configure a basic set of GitHub Actions.",
+};
+
+const OPTION_RELEASE_PLEASE: TemplateOption = {
+  name: "releasePlease",
+  label: "Release Please",
+  hint: "GHA workflow for creating new releases based on conventional commit messages.",
+};
+
+const COMMON_OPTIONS = [
+  OPTION_ESLINT,
+  OPTION_PRETTIER,
+  OPTION_EDITOR_CONFIG,
+  OPTION_VITEST,
+  OPTION_GITHOOKS,
+  OPTION_HUSKY,
+  OPTION_GITHUB_ACTIONS,
+  OPTION_RELEASE_PLEASE,
+];
+
+const COMMON_RECOMMENDED = ["eslint", "prettier", "editorconfig"];
+
+const OPTION_REACT_TESTING_LIBRARY: TemplateOption = {
+  name: "reactTestingLibrary",
+  label: "React Testing Library",
+  hint: "A testing library for testing React components.",
+};
+
+const REACT_OPTIONS = [OPTION_REACT_TESTING_LIBRARY];
+
+const TEMPLATES: Template[] = [
+  {
+    name: "node",
+    label: "Node (Node.js Module)",
+    hint: "A basic Node.js TS project.",
+    color: green,
+    templateDir: "node",
+    options: [...COMMON_OPTIONS],
+    recommended: [...COMMON_RECOMMENDED],
+  },
+  {
+    name: "node-server",
+    label: "Node-server (Server)",
+    hint: "A Node.js TS server project.",
+    color: green,
+    templateDir: "node",
+    options: [...COMMON_OPTIONS],
+    recommended: [...COMMON_RECOMMENDED],
+  },
+  {
+    name: "node-cli",
+    label: "Node-cli (CLI)",
+    hint: "A Node.js TS project for creating a CLI application.",
+    color: green,
+    templateDir: "node",
+    options: [...COMMON_OPTIONS],
+    recommended: [...COMMON_RECOMMENDED],
+  },
+  {
+    name: "react",
+    label: "React (Browser)",
+    hint: "A React TS web application project.",
+    color: cyan,
+    templateDir: "react",
+    options: [...COMMON_OPTIONS, ...REACT_OPTIONS],
+    projectDependencyOverrides: {
+      dependencies: [
+        "testipaketti",
+        { package: "versiollinenpaketti", version: "2.0" },
+        {
+          option: "editorconfig",
+          packages: [{ package: "editorconfig", version: "^1" }, "paketti"],
+        },
+        {
+          option: "eslint",
+          packages: [{ package: "boo", version: "^2" }, "baa"],
+        },
+      ],
+      devDependencies: [
+        "testipaketti",
+        { package: "versiollinenpaketti", version: "2.0" },
+        {
+          option: "editorconfig",
+          packages: [{ package: "editorconfig", version: "^1" }, "paketti"],
+        },
+        {
+          option: "eslint",
+          packages: [{ package: "boo", version: "^2" }, "baa"],
+        },
+      ],
+    },
+    projectOptions: ["react"],
+    recommended: [...COMMON_RECOMMENDED],
+  },
+  {
+    name: "react-lib",
+    label: "React-lib (Browser)",
+    hint: "A TS project for creating a React component library.",
+    color: cyan,
+    templateDir: "react-lib",
+    options: [...COMMON_OPTIONS, ...REACT_OPTIONS],
+    projectOptions: ["react"],
+    recommended: [...COMMON_RECOMMENDED],
+  },
+];
+
+async function main() {
+  const data = await readFile(path.join(__dirname, "../package.json"), "utf8");
+  const { version } = JSON.parse(data) as { version: string };
+
+  // parse command line arguments
+  const argTargetDir = argv._[0]
+    ? formatTargetDir(String(argv._[0]))
+    : undefined;
+  const argTemplate = argv.template;
+  const argOverwrite = argv.overwrite;
+
+  const help = argv.help;
+  if (help) {
+    console.log(helpMessage);
+    process.exit(0);
+  }
+
+  let { path: dir, name } = getPathAndNameFromTargetDir(argTargetDir!);
+  if (name && !isValidPackageName(name)) {
+    logError(`\n"${name}" is not a valid package name.`);
+    name = DEFAULT_PACKAGE_NAME;
+    dir = DEFAULT_PATH;
+  }
+
+  console.log(); // empty line before the prompts
+
+  // intro
+  intro(color.bgBlue(color.white(` create-project v${version} `)));
+
+  // 1. prompt for project name
+  const defaultProjectName = name || "my-project";
+  const projectName = await prompt<TextOptions, TextReturn>(text, {
+    message: "Project name:",
+    defaultValue: defaultProjectName,
+    placeholder: defaultProjectName,
+    validate: (value) => {
+      if (!value || value.length === 0) return undefined;
+      if (!isValidPackageName(value))
+        return "Please enter a valid package name. (see: https://docs.npmjs.com/cli/v11/configuring-npm/package-json#name)";
+    },
+  });
+
+  // 2. prompt for directory
+  let targetDir = argTargetDir;
+  if (!targetDir) {
+    const defaultTargetDir = dir || `.${path.sep}${projectName}`;
+    targetDir = await prompt<TextOptions, TextReturn>(text, {
+      message: "Where to create the project?",
+      defaultValue: defaultTargetDir,
+      placeholder: defaultTargetDir,
+      validate: (value) => {
+        if (!value || value.length === 0) return undefined;
+      },
+    });
+  }
+  const targetDirPath = path.resolve(targetDir);
+  log.step(`Using target directory: ${targetDirPath}`);
+
+  // 3. handle target if is a file instead of a directory
+  if (fs.existsSync(targetDirPath) && !isDir(targetDirPath)) {
+    const overwrite = argOverwrite
+      ? true
+      : await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
+          message: yellow(
+            `Target "${targetDirPath}" is not a directory. Please choose how to proceed:`
+          ),
+          active: "Delete the file and continue",
+          inactive: "Cancel operation",
+        });
+
+    switch (overwrite) {
+      case true: {
+        const confirmDelete = await prompt<ConfirmOptions, ConfirmReturn>(
+          confirm,
+          {
+            message: yellow(
+              `Are you sure you want to delete file "${targetDirPath}"?`
+            ),
+          }
+        );
+        if (confirmDelete) {
+          fs.rmSync(targetDirPath, { force: true });
+        } else {
+          cancel("Operation cancelled.");
+          process.exit(1);
+        }
+        break;
+      }
+      case false:
+        cancel("Operation cancelled.");
+        process.exit(1);
+    }
+  }
+
+  // 4. handle directory if exists and not empty
+  const cwd = process.cwd();
+  if (fs.existsSync(targetDirPath) && !isEmpty(targetDirPath)) {
+    const overwrite = argOverwrite
+      ? "yes"
+      : await prompt(select, {
+          message: yellow(
+            (targetDirPath === cwd
+              ? "Current directory"
+              : `Target directory "${targetDirPath}"`) +
+              ` is not empty. Please choose how to proceed:`
+          ),
+          options: [
+            {
+              label: "Cancel operation",
+              value: "no",
+            },
+            {
+              label: "Remove existing files and continue",
+              value: "yes",
+            },
+            {
+              label: "Ignore files and continue",
+              value: "ignore",
+            },
+          ],
+        });
+
+    switch (overwrite) {
+      case "yes": {
+        const confirmDelete = await prompt<ConfirmOptions, ConfirmReturn>(
+          confirm,
+          {
+            message: yellow(
+              `Are you sure you want to delete all files in "${targetDirPath}"?`
+            ),
+          }
+        );
+        if (confirmDelete) {
+          emptyDir(targetDir);
+        } else {
+          cancel("Operation cancelled.");
+          process.exit(1);
+        }
+        break;
+      }
+      case "no":
+        cancel("Operation cancelled.");
+        process.exit(1);
+    }
+  }
+
+  // 4. prompt for template
+  let template = TEMPLATES.find((t) => t.name === argTemplate);
+  const noTemplatePrompt = template ? true : false;
+  template ??= await prompt<SelectOptions<Template>, SelectReturn<Template>>(
+    select,
+    {
+      message: "Select template:",
+      options: TEMPLATES.map((t) => {
+        return {
+          value: t,
+          label: `${t.color(t.label)}`,
+          hint: t.hint,
+        };
+      }),
+    }
+  );
+  if (noTemplatePrompt) {
+    log.step(`Using template: ${template.color(template.label)}`);
+  }
+
+  // 5. prompt for additional tools / options
+  const initialValues = template.recommended ?? [];
+  let options = await prompt<
+    MultiSelectOptions<string>,
+    MultiSelectReturn<string>
+  >(multiselect, {
+    message: "Select additional tools:",
+    initialValues,
+    required: false,
+    maxItems: 10,
+    options: template.options.map((o) => {
+      const label = initialValues.includes(o.name)
+        ? `${template.color(o.label + " (recommended)")}`
+        : `${template.color(o.label)}`;
+      return {
+        value: o.name,
+        label,
+        hint: o.hint,
+      };
+    }),
+  });
+  options = [...options, ...(template.projectOptions ?? [])];
+
+  // 6. handle mutually exclusive options
+  if (options.includes("husky") && options.includes("githooks")) {
+    const gitHooksImplementation = await prompt<
+      SelectOptions<string>,
+      SelectReturn<string>
+    >(select, {
+      message: yellow(
+        "It is not possible to select both Husky and native git-hooks. Select which one to use:"
+      ),
+      options: [
+        {
+          label: "Native git-hooks",
+          value: "githooks",
+        },
+        {
+          label: "Husky",
+          value: "husky",
+        },
+      ],
+    });
+
+    const removeIndex =
+      gitHooksImplementation === "husky"
+        ? options.indexOf("githooks")
+        : options.indexOf("husky");
+    options = [
+      ...options.slice(0, removeIndex),
+      ...options.slice(removeIndex + 1, options.length),
+    ];
+  }
+
+  // 7. prompt whether the dependencies should be installed
+  const installDeps = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
+    message: "Install dependencies?",
+    active: "Yes",
+    inactive: "No",
+  });
+
+  // 8. prompt for package manager (if dependencies are installed)
+  let packageManager = "npm";
+  if (installDeps) {
+    packageManager = await prompt<SelectOptions<string>, SelectReturn<string>>(
+      select,
+      {
+        message: "Select package manager:",
+        options: [
+          {
+            label: "npm",
+            value: "npm",
+          },
+          {
+            label: "pnpm",
+            value: "pnpm",
+          },
+        ],
+      }
+    );
+  }
+
+  // 9. scaffold the project
+  const s = spinner();
+
+  const templateDirPath = path.resolve(
+    fileURLToPath(import.meta.url),
+    "../..",
+    `template-${template.name}`
+  );
+
+  s.start(`Creating the project directory (${targetDirPath})...`);
+  createDir(targetDirPath, s);
+  s.stop(`Created the project directory ("${targetDirPath}").`);
+
+  s.start(`Copying template ${template.label} to the project directory...`);
+  copyTemplate(templateDirPath, targetDirPath, s);
+  s.stop(`Copied template "${template.label}" to the project directory.`);
+
+  s.start(`Tailor the project to match the requested settings...`);
+  updateCreatedProject(
+    targetDirPath,
+    templateDirPath,
+    projectName,
+    options,
+    template.projectDependencyOverrides,
+    packageManager,
+    installDeps,
+    s
+  );
+  s.stop(`Project has been tailored to match your settings.`);
+
+  // 10. output next steps
+
+  // outro
+  outro("You're all set!");
+}
+
+main().catch(console.error);
