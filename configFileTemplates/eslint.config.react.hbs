@@ -1,0 +1,119 @@
+import js from '@eslint/js';
+import globals from 'globals';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
+import react from 'eslint-plugin-react';
+import reactDom from 'eslint-plugin-react-dom';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import reactX from 'eslint-plugin-react-x';
+import tseslint from 'typescript-eslint';
+import { globalIgnores } from 'eslint/config';
+{{#each imports}}
+{{#if default}}
+import {{default}}{{#if named}}, { {{join named ', '}} }{{/if}} from '{{source}}';
+{{else}}
+import { {{join named ", "}} } from '{{source}}';
+{{/if}}
+{{/each}}
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const reactBase = {
+  extends: [
+    react.configs.flat.recommended,
+    react.configs.flat['jsx-runtime'],
+    reactDom.configs.recommended,
+    reactX.configs.recommended,
+  ],
+  languageOptions: {
+    parser: tseslint.parser,
+    parserOptions: {
+      projectService: true,
+      tsconfigRootDir: __dirname,
+      ecmaFeatures: {
+        jsx: true,
+      },
+      globals: {
+        ...globals.browser,
+      }
+    },
+  },
+  plugins: {
+    {{#if prettier}}
+    eslintConfigPrettier,
+    {{/if}}
+    js,
+    jsxA11y,
+    react,
+    reactDom,
+    reactHooks,
+    reactRefresh,
+    reactX,
+    tseslint,
+  },
+  settings: {
+    react: {
+      version: 'detect',
+    },
+  },
+  rules: {
+    'react/jsx-props-no-spreading': ['warn'],
+    'react/jsx-no-useless-fragment': ['error'],
+    'react/react-in-jsx-scope': 'off',
+    'react/require-default-props': [
+      'error',
+      {
+        functions: 'defaultArguments',
+      },
+    ],
+    'react/prop-types': 'off',
+  },
+};
+
+// https://typescript-eslint.io/packages/typescript-eslint/#config
+export default tseslint.config(
+  js.configs.recommended,
+  tseslint.configs.recommendedTypeChecked,
+  tseslint.configs.stylisticTypeChecked,
+  {{#if shareableConfigs}}
+  {{#each shareableConfigs}}
+  {{this}},
+  {{/each}}
+  {{/if}}
+  {{#if ignores}}
+  globalIgnores([{{{join ignores ", "}}}]),
+  {{/if}}
+  {
+    files: ['**/*.{ts,tsx}'],
+    ...reactBase,
+  },
+  {{#if testConfig}}
+  {
+    files: ['**/*.test.{ts,tsx}'],
+    ...reactBase,
+    extends: [
+      ...reactBase.extends,
+      {{#if testingLibrary}}
+      testingLibrary.configs['flat/dom'],
+      testingLibrary.configs['flat/react'],
+      {{/if}}
+    ],
+    plugins: {
+      ...reactBase.plugins,
+      {{#if testConfig.vitestPlugin}}
+      vitest,
+      {{/if}}
+      {{#if testConfig.testingLibrary}}
+      'testing-library': testingLibrary,
+      {{/if}}
+    },
+    {{#if testConfig.vitestPlugin}}
+    rules: {
+        ...vitest.configs.recommended.rules,
+    },
+    {{/if}}
+  }
+  {{/if}}
+)

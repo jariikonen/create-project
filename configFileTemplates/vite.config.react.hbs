@@ -1,0 +1,67 @@
+import { defineConfig } from '{{{defineConfigSource}}}';
+import react from '@vitejs/plugin-react';
+{{#if buildConfig}}
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import dts from 'vite-plugin-dts';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+{{/if}}
+
+// https://vite.dev/config/
+{{#if buildConfig}}
+export default defineConfig(({ command }) => ({
+  plugins: [
+    react(),
+    dts({
+      rollupTypes: true,
+      tsconfigPath: './tsconfig.lib.json',
+    }),
+  ],
+{{else}}
+export default defineConfig({
+  plugins: [react()],
+{{/if}}
+  {{#if testConfig}}
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    {{#if testingLibrary}}
+    setupFiles: './testSetup.ts',
+    {{/if}}
+    dir: 'src/',
+    include: ['**/__tests__/**/*.test.{ts,tsx}'],
+  {{#if buildConfig}}
+  },
+  {{else}}
+  }
+  {{/if}}
+  {{/if}}
+  {{#if buildConfig}}
+  build: {
+    lib: {
+      entry: path.resolve(__dirname, 'src/components/index.ts'),
+      name: '{{projectName}}',
+      formats: ['es', 'umd'],
+      fileName: (format: string) => `{{projectName}}.${format}.js`,
+    },
+    rollupOptions: {
+      external: ['react', 'react-dom'],
+      output: {
+        globals: {
+          react: 'React',
+          'react-dom': 'ReactDOM',
+        },
+      },
+    },
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
+  // exclude the public folder contents from dist but allow them to be shown when running the dev script
+  publicDir: command === 'serve' ? 'public' : false,
+  {{/if}}
+{{#if buildConfig}}
+}));
+{{else}}
+});
+{{/if}}

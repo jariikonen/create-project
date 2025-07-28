@@ -1,0 +1,7 @@
+{
+  "eslint": "eslint.config.node.hbs",
+  "vitest": {
+    "template": "vitest.config.node.hbs",
+    "script": "configureVitest.node"
+  }
+}

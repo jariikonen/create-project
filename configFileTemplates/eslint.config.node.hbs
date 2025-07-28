@@ -1,0 +1,62 @@
+import js from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import { globalIgnores } from 'eslint/config'
+{{#each imports}}
+{{#if default}}
+import {{default}}{{#if named}}, { {{join named ', '}} }{{/if}} from '{{source}}';
+{{else}}
+import { {{join named ", "}} } from '{{source}}';
+{{/if}}
+{{/each}}
+
+export default tseslint.config(
+  js.configs.recommended,
+  tseslint.configs.recommendedTypeChecked,
+  tseslint.configs.stylisticTypeChecked,
+  {{#if shareableConfigs}}
+  {{#each shareableConfigs}}
+  {{this}},
+  {{/each}}
+  {{/if}}
+  {{#if ignores}}
+  globalIgnores([{{{join ignores ", "}}}]),
+  {
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {{/if}}
+  {
+    files: ['**/*.{ts,tsx}'],
+    plugins: {
+      js,
+      {{#if prettier}}
+      eslintConfigPrettier,
+      {{/if}}
+      tseslint,
+    },
+  },
+  {{#if testConfig}}
+  {
+    files: ['**/*.test.{ts,tsx}'],
+    plugins: {
+      js,
+      {{#if prettier}}
+      eslintConfigPrettier,
+      {{/if}}
+      tseslint,
+      {{#if testConfig.vitestPlugin}}
+      vitest,
+      {{/if}}
+    },
+    {{#if testConfig.vitestPlugin}}
+    rules: {
+        ...vitest.configs.recommended.rules,
+    },
+    {{/if}}
+  }
+  {{/if}}
+)

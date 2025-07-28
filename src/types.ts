@@ -1,4 +1,4 @@
-import { spinner } from "@clack/prompts";
+import { spinner } from '@clack/prompts';
 
 export type ColorFunc = (str: string | number) => string;
 
@@ -31,18 +31,40 @@ export interface OptionDependency {
 export interface DependencyOverrides {
   dependencies?: (OptionDependency | Package)[];
   devDependencies?: (OptionDependency | Package)[];
+  peerDependencies?: (OptionDependency | Package)[];
 }
 
 export interface DefaultDependencies {
   dependencies?: string[];
   devDependencies?: string[];
+  peerDependencies?: string[];
   withOption?: Record<string, DefaultDependencies>;
 }
 
 export interface Dependencies {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
 }
 
 type Spinner = typeof spinner;
 export type SpinnerObject = ReturnType<Spinner>;
+
+export interface Import {
+  default?: string;
+  named?: string[];
+  source: string;
+}
+
+export interface TemplateConfig {
+  template?: string;
+  script?: string;
+}
+
+export interface ConfigureScriptProps {
+  projectName: string;
+  targetDirPath: string;
+  templateDirPath: string;
+  configFileTemplateDirPath: string;
+  options: string[];
+}

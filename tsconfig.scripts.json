@@ -1,17 +1,12 @@
 {
-  "include": ["src", "tsdown.config.ts", "vitest.config.ts", "configFileTemplates"],
+  "include": ["configurationScripts/**/*"],
   "compilerOptions": {
     "target": "ES2022",
-    "useDefineForClassFields": true,
     "module": "preserve",
     "lib": ["ES2022"],
     "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "moduleDetection": "force",
-    "noEmit": true,
+    "outDir": "./dist/configurationScripts",
+    "rootDir": "./configurationScripts", 
 
     /* Linting */
     "strict": true,
@@ -25,8 +20,5 @@
     "sourceMap": true,
     "inlineSources": true,
     "inlineSourceMap": false,
-
-    /* Vitest */
-    "types": ["vitest/globals"],
   }
 }
