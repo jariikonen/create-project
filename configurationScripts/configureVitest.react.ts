@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { parse } from 'comment-json';
+import { ConfigureScriptProps } from '@shared/types';
 
 const TESTSETUP_FILE_NAME = 'testSetup.ts';
 const TSCONFIG_FILE_NAME = 'tsconfig.node.json';
@@ -29,9 +30,11 @@ function includeTestSetupInTsConfig(targetDirPath: string) {
 }
 
 export function configureVitest(
-  targetDirPath: string,
-  configFileTemplateDirPath: string,
-  options: string[]
+  _projectName: ConfigureScriptProps['projectName'],
+  targetDirPath: ConfigureScriptProps['targetDirPath'],
+  _templateDirPath: ConfigureScriptProps['templateDirPath'],
+  configFileTemplateDirPath: ConfigureScriptProps['configFileTemplateDirPath'],
+  options: ConfigureScriptProps['options']
 ) {
   if (options.includes('reactTestingLibrary')) {
     copyTestSetup(targetDirPath, configFileTemplateDirPath);

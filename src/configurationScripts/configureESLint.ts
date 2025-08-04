@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Handlebars from 'handlebars';
-import { Import, SpinnerObject, TemplateConfig } from '../types';
-import { getConfigFileTemplateContent } from '../common';
+import { Import, SpinnerObject, TemplateConfig } from '@shared/types';
+import { getConfigFileTemplateContent } from '@shared/common';
 
 const CONFIG_FILE_NAME = 'eslint.config.mjs';
 

@@ -1,8 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import Handlebars from 'handlebars';
-import { SpinnerObject, TemplateConfig } from '../types';
-import { getConfigFileTemplateContent } from '../common';
+import { SpinnerObject, TemplateConfig } from '@shared/types';
+import { getConfigFileTemplateContent } from '@shared/common';
 
 const README_FILE_NAME = 'README.md';
 

@@ -33,7 +33,7 @@ import {
   prompt,
   updateCreatedProject,
 } from './functions';
-import { Template, TemplateOption } from './types';
+import { Template, TemplateOption } from '@shared/types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

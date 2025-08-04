@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "preserve",
+    "lib": ["ES2022"],
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["shared/*"]
+    },
+    "outDir": "dist",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    /* Debugging */
+    "sourceMap": true,
+    "inlineSources": true,
+    "inlineSourceMap": false,
+
+    /* Vitest */
+    "types": ["vitest/globals"]
+  },
+  "tsc-alias": {
+    "resolveFullPaths": true
+  }
+}

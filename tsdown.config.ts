@@ -7,8 +7,10 @@ export default defineConfig(() => ({
   minify: true,
   hooks(hooks) {
     hooks.hook('build:done', () => {
-      console.log('tsdown build:done - running tsc');
-      exec('tsc -p tsconfig.scripts.json');
+      console.log(
+        'tsdown build:done - building dynamically imported configuration scripts'
+      );
+      exec('pnpm run build:scripts');
     });
   },
 }));

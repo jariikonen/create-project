@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpinnerObject, TemplateConfig } from './types';
+import { parse } from 'comment-json';
+import { SpinnerObject, TemplateConfig } from '@shared/types';
 
 export function getTemplateName(config: string | TemplateConfig) {
   if (typeof config === 'object') {
@@ -40,11 +41,27 @@ export function getConfigFileTemplateContent(
 }
 
 export function copyFile(
-  filename: string,
+  srcFilename: string,
   srcDirPath: string,
-  targetDirPath: string
+  targetDirPath: string,
+  targetFilename?: string
 ) {
-  const srcFile = path.resolve(srcDirPath, filename);
-  const destFile = path.resolve(targetDirPath, filename);
+  targetFilename = targetFilename ?? srcFilename;
+  const srcFile = path.resolve(srcDirPath, srcFilename);
+  const destFile = path.resolve(targetDirPath, targetFilename);
   fs.copyFileSync(srcFile, destFile);
+}
+
+export function includeFileInTsconfig(filename: string, tsconfigPath: string) {
+  const tsconfigJson = parse(
+    fs.readFileSync(tsconfigPath, 'utf-8')
+  ) as unknown as {
+    include: string[];
+  };
+  tsconfigJson.include = [...tsconfigJson.include, filename];
+  fs.writeFileSync(
+    tsconfigPath,
+    JSON.stringify(tsconfigJson, null, 2) + '\n',
+    'utf-8'
+  );
 }

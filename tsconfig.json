@@ -1,38 +1,18 @@
 {
   "include": [
     "src",
+    "shared",
     "tsdown.config.ts",
     "vitest.config.ts",
     "configFileTemplates",
     "configurationScripts"
   ],
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "useDefineForClassFields": true,
-    "module": "preserve",
-    "lib": ["ES2022"],
-    "skipLibCheck": true,
-
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "moduleDetection": "force",
-    "noEmit": true,
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-
-    /* Debugging */
-    "sourceMap": true,
-    "inlineSources": true,
-    "inlineSourceMap": false,
-
-    /* Vitest */
-    "types": ["vitest/globals"]
+    "noEmit": true
   }
 }

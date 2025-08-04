@@ -1,4 +1,4 @@
-import { DefaultDependencies } from './types';
+import { DefaultDependencies } from '@shared/types';
 
 export const LATEST_DEPENDENCY_VERSIONS: Record<string, string> = {
   '@eslint/js': '^9.30.1',

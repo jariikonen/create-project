@@ -11,7 +11,7 @@ import {
   DefaultDependencies,
   TemplateConfig,
   ConfigureScriptProps,
-} from './types';
+} from '@shared/types';
 import {
   DEFAULT_DEPENDENCIES,
   LATEST_DEPENDENCY_VERSIONS,
@@ -19,7 +19,7 @@ import {
 import { configureESLint } from './configurationScripts/configureESLint';
 import { configurePrettier } from './configurationScripts/configurePrettier';
 import { configureEditorConfig } from './configurationScripts/configureEditorConfig';
-import { getScriptName } from './common';
+import { getScriptName } from '@shared/common';
 import { configureReadme } from './configurationScripts/configureReadme';
 
 const TEMPLATE_FILE_CONFIG_FILE_NAME = 'template.config.json';

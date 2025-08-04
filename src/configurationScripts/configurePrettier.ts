@@ -1,4 +1,4 @@
-import { copyFile } from '../common';
+import { copyFile } from '@shared/common';
 
 export function configurePrettier(
   targetDirPath: string,

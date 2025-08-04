@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsdown --sourcemap --watch",
     "build": "tsdown",
-    "build:scripts": "tsc -p tsconfig.scripts.json",
+    "build:scripts": "tsc -p tsconfig.scripts.json && tsc-alias -p tsconfig.scripts.json",
     "typecheck": "tsc",
     "cleanup": "rm -rf ./dist && rm -rf ./coverage && rm -rf ./node_modules"
   },
@@ -22,6 +22,7 @@
     "mri": "^1.2.0",
     "picocolors": "^1.1.1",
     "source-map-support": "^0.5.21",
+    "tsc-alias": "^1.8.16",
     "tsdown": "^0.12.9",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.24.1",
