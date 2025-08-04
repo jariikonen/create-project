@@ -1,3 +1,4 @@
 {
-  "eslint": "eslint.config.react.hbs"
+  "eslint": "eslint.config.react.hbs",
+  "readme": "readme.react.hbs"
 }

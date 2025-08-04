@@ -1,0 +1,39 @@
+## Selected options
+
+{{#if options}}
+These options were selected when initializing this project:
+
+{{#each optionData}}
+- [{{this.display}}](#{{this.link}})
+{{/each}}
+{{else}}
+No options were selected when initializing this project.
+{{/if}}
+{{#if optionData.eslint}}
+
+{{> eslintPartial}}
+{{/if}}
+{{#if optionData.prettier}}
+
+{{> prettierPartial}}
+{{/if}}
+{{#if optionData.editorconfig}}
+
+{{> editorconfigPartial}}
+{{/if}}
+{{#if optionData.githooks}}
+
+{{> githooksPartial}}
+{{/if}}
+{{#if optionData.husky}}
+
+{{> huskyPartial}}
+{{/if}}
+{{#if optionData.githubActions}}
+
+{{> githubActionsPartial}}
+{{/if}}
+{{#if optionData.releasePlease}}
+
+{{> releasePleasePartial}}
+{{/if}}

@@ -20,6 +20,7 @@ import { configureESLint } from './configurationScripts/configureESLint';
 import { configurePrettier } from './configurationScripts/configurePrettier';
 import { configureEditorConfig } from './configurationScripts/configureEditorConfig';
 import { getScriptName } from './common';
+import { configureReadme } from './configurationScripts/configureReadme';
 
 const TEMPLATE_FILE_CONFIG_FILE_NAME = 'template.config.json';
 
@@ -393,24 +394,33 @@ async function runScript(
   }
 }
 
+function readAndRemoveTemplateFileConfig(
+  targetDirPath: string
+): Record<string, string | TemplateConfig> {
+  // read template file config from the target dir
+  const templateFileConfigPath = path.join(
+    targetDirPath,
+    TEMPLATE_FILE_CONFIG_FILE_NAME
+  );
+  return JSON.parse(fs.readFileSync(templateFileConfigPath, 'utf-8')) as Record<
+    string,
+    string | TemplateConfig
+  >;
+
+  // remove template file config file from the target dir
+  fs.rmSync(templateFileConfigPath);
+}
+
 async function configureOptions(
   projectName: string,
   targetDirPath: string,
   templateDirPath: string,
   configFileTemplateDirPath: string,
   options: string[],
+  templateFileConfigJson: Record<string, string | TemplateConfig>,
   dependencies: Dependencies,
   s: SpinnerObject
 ) {
-  // read template file config from the target dir
-  const templateFileConfigPath = path.join(
-    targetDirPath,
-    TEMPLATE_FILE_CONFIG_FILE_NAME
-  );
-  const templateFileConfigJson = JSON.parse(
-    fs.readFileSync(templateFileConfigPath, 'utf-8')
-  ) as Record<string, string | TemplateConfig>;
-
   // configure options
   for (const option of options) {
     if (option === 'eslint') {
@@ -468,9 +478,6 @@ async function configureOptions(
       });
     }
   }
-
-  // remove template file config file from the target dir
-  fs.rmSync(templateFileConfigPath);
 }
 
 function sortObjectKeys<T extends Record<string, string>>(
@@ -576,6 +583,8 @@ export async function updateCreatedProject(
     'utf-8'
   );
 
+  const templateFileConfigJson = readAndRemoveTemplateFileConfig(targetDirPath);
+
   // configure optional tools
   await configureOptions(
     projectName,
@@ -583,7 +592,17 @@ export async function updateCreatedProject(
     templateDirPath,
     configFileTemplateDirPath,
     options,
+    templateFileConfigJson,
     dependencies,
+    s
+  );
+
+  // configure readme file
+  configureReadme(
+    targetDirPath,
+    configFileTemplateDirPath,
+    templateFileConfigJson,
+    options,
     s
   );
 

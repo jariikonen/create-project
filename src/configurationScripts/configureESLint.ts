@@ -60,7 +60,7 @@ function getTestConfig(options: string[]) {
 
 export function configureESLint(
   targetDirPath: string,
-  templateConfigJson: Record<string, string | TemplateConfig>,
+  templateFileConfigJson: Record<string, string | TemplateConfig>,
   configFileTemplateDirPath: string,
   options: string[],
   s: SpinnerObject
@@ -83,7 +83,7 @@ export function configureESLint(
 
   // apply data on the template
   const templateContent = getConfigFileTemplateContent(
-    templateConfigJson,
+    templateFileConfigJson,
     'eslint',
     configFileTemplateDirPath,
     s

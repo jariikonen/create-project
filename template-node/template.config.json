@@ -3,5 +3,6 @@
   "vitest": {
     "template": "vitest.config.node.hbs",
     "script": "configureVitest.node"
-  }
+  },
+  "readme": "readme.node.hbs"
 }
