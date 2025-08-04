@@ -38,3 +38,13 @@ export function getConfigFileTemplateContent(
   );
   return fs.readFileSync(templatePath, 'utf-8');
 }
+
+export function copyFile(
+  filename: string,
+  srcDirPath: string,
+  targetDirPath: string
+) {
+  const srcFile = path.resolve(srcDirPath, filename);
+  const destFile = path.resolve(targetDirPath, filename);
+  fs.copyFileSync(srcFile, destFile);
+}
