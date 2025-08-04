@@ -15,6 +15,8 @@ function mapOptionsToData(options: string[], s: SpinnerObject) {
         return { display: 'Prettier', link: 'prettier' };
       case 'editorconfig':
         return { display: 'EditorConfig', link: 'editorconfig' };
+      case 'vitest':
+        return { display: 'Vitest', link: 'vitest' };
       default:
         s.stop(
           `configureReadme.mapOptions(): There is no case for "${optionName}"`,
@@ -57,6 +59,7 @@ export function configureReadme(
       { filename: 'common.hbs', name: 'common' },
       { filename: 'eslint.hbs', name: 'eslintPartial' },
       { filename: 'prettier.hbs', name: 'prettierPartial' },
+      { filename: 'vitest.hbs', name: 'vitestPartial' },
       { filename: 'editorconfig.hbs', name: 'editorconfigPartial' },
       { filename: 'githooks.hbs', name: 'githooksPartial' },
       { filename: 'husky.hbs', name: 'huskyPartial' },
