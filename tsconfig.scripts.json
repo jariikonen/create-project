@@ -6,7 +6,7 @@
     "lib": ["ES2022"],
     "skipLibCheck": true,
     "outDir": "./dist/configurationScripts",
-    "rootDir": "./configurationScripts", 
+    "rootDir": "./configurationScripts",
 
     /* Linting */
     "strict": true,
@@ -19,6 +19,6 @@
     /* Debugging */
     "sourceMap": true,
     "inlineSources": true,
-    "inlineSourceMap": false,
+    "inlineSourceMap": false
   }
 }

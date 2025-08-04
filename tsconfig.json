@@ -1,5 +1,11 @@
 {
-  "include": ["src", "tsdown.config.ts", "vitest.config.ts", "configFileTemplates", "configurationScripts"],
+  "include": [
+    "src",
+    "tsdown.config.ts",
+    "vitest.config.ts",
+    "configFileTemplates",
+    "configurationScripts"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "useDefineForClassFields": true,
@@ -27,6 +33,6 @@
     "inlineSourceMap": false,
 
     /* Vitest */
-    "types": ["vitest/globals"],
+    "types": ["vitest/globals"]
   }
 }
