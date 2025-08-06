@@ -17,6 +17,14 @@ function mapOptionsToData(options: string[], s: SpinnerObject) {
         return { display: 'EditorConfig', link: 'editorconfig' };
       case 'vitest':
         return { display: 'Vitest', link: 'vitest' };
+      case 'reactTestingLibrary':
+        return {
+          display: 'React Testing Library',
+          link: 'react-testing-library',
+        };
+      case 'react':
+      case 'lib':
+        return;
       default:
         s.stop(
           `configureReadme.mapOptions(): There is no case for "${optionName}"`,
@@ -65,6 +73,10 @@ export function configureReadme(
       { filename: 'husky.hbs', name: 'huskyPartial' },
       { filename: 'githubActions.hbs', name: 'githubActionsPartial' },
       { filename: 'releasePlease.hbs', name: 'releasePleasePartial' },
+      {
+        filename: 'reactTestingLibrary.hbs',
+        name: 'reactTestingLibraryPartial',
+      },
     ],
     configFileTemplateDirPath
   );
