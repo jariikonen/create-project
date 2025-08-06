@@ -23,9 +23,9 @@ import mri from 'mri';
 import {
   copyTemplate,
   createDir,
-  emptyDir,
-  formatTargetDir,
-  getPathAndNameFromTargetDir,
+  clearDir,
+  resolveAndValidateTargetDirPath,
+  getProjectName,
   isDir,
   isEmpty,
   isValidPackageName,
@@ -38,7 +38,7 @@ import { Template, TemplateOption } from '@shared/types';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const { cyan, green, yellow } = color;
+const { cyan, green, yellow: warning } = color;
 
 const argv = mri<{
   template?: string;
@@ -123,6 +123,7 @@ const OPTION_RELEASE_PLEASE: TemplateOption = {
   hint: 'GHA workflow for creating new releases based on conventional commit messages.',
 };
 
+/** The options common to all (or the most) of the templates. */
 const COMMON_OPTIONS = [
   OPTION_ESLINT,
   OPTION_PRETTIER,
@@ -134,16 +135,23 @@ const COMMON_OPTIONS = [
   OPTION_RELEASE_PLEASE,
 ];
 
+/** The recommended options from the COMMON_OPTIONS. */
 const COMMON_RECOMMENDED = ['eslint', 'prettier', 'editorconfig'];
 
+/** Options specific to the React Testing Library. */
 const OPTION_REACT_TESTING_LIBRARY: TemplateOption = {
   name: 'reactTestingLibrary',
   label: 'React Testing Library',
   hint: 'A testing library for testing React components.',
 };
 
+/** Options specific to React. */
 const REACT_OPTIONS = [OPTION_REACT_TESTING_LIBRARY];
 
+/**
+ * Template objects containing both template configuration data and data used
+ * for presenting the template in the select prompt.
+ */
 const TEMPLATES: Template[] = [
   {
     name: 'node',
@@ -180,33 +188,41 @@ async function main() {
   const data = await readFile(path.join(__dirname, '../package.json'), 'utf8');
   const { version } = JSON.parse(data) as { version: string };
 
-  // parse command line arguments
-  const argTargetDir = argv._[0]
-    ? formatTargetDir(String(argv._[0]))
-    : undefined;
-  const argTemplate = argv.template;
-  const argOverwrite = argv.overwrite;
-
-  const help = argv.help;
-  if (help) {
+  // handle --help flag
+  if (argv.help) {
     console.log(helpMessage);
     process.exit(0);
   }
 
-  let { path: dir, name } = getPathAndNameFromTargetDir(argTargetDir!);
-  if (name && !isValidPackageName(name)) {
-    logError(`\n"${name}" is not a valid package name.`);
-    name = DEFAULT_PACKAGE_NAME;
-    dir = DEFAULT_PATH;
+  // parse and validate target directory path (if in arguments)
+  const posArg0 = argv._[0] ? String(argv._[0]) : undefined;
+  let argTargetDir: string | undefined = undefined;
+  if (posArg0) {
+    const result = resolveAndValidateTargetDirPath(posArg0);
+    if (result.success) {
+      argTargetDir = result.value;
+    } else {
+      logError(`\n${result.error}`);
+    }
   }
 
+  //
+  let argProjectName = getProjectName(argTargetDir!);
+  let targetDir = argTargetDir;
+  if (argProjectName && !isValidPackageName(argProjectName)) {
+    logError(`\n"${argProjectName}" is not a valid package name.`);
+    argProjectName = DEFAULT_PACKAGE_NAME;
+    targetDir = DEFAULT_PATH;
+  }
+
+  console.log('onWindows:', process.platform === 'win32');
   console.log(); // empty line before the prompts
 
   // intro
   intro(color.bgBlue(color.white(` create-project v${version} `)));
 
   // 1. prompt for project name
-  const defaultProjectName = name || 'my-project';
+  const defaultProjectName = argProjectName || 'my-project';
   const projectName = await prompt<TextOptions, TextReturn>(text, {
     message: 'Project name:',
     defaultValue: defaultProjectName,
@@ -219,27 +235,30 @@ async function main() {
   });
 
   // 2. prompt for directory
-  let targetDir = argTargetDir;
   if (!targetDir) {
-    const defaultTargetDir = dir || `.${path.sep}${projectName}`;
+    const defaultTargetDir = path.resolve(projectName);
     targetDir = await prompt<TextOptions, TextReturn>(text, {
       message: 'Where to create the project?',
       defaultValue: defaultTargetDir,
       placeholder: defaultTargetDir,
       validate: (value) => {
         if (!value || value.length === 0) return undefined;
+        const result = resolveAndValidateTargetDirPath(value);
+        if (!result.success) {
+          return result.error;
+        }
       },
     });
   }
-  const targetDirPath = path.resolve(targetDir);
+  const targetDirPath = targetDir;
   log.step(`Using target directory: ${targetDirPath}`);
 
   // 3. handle target if is a file instead of a directory
   if (fs.existsSync(targetDirPath) && !isDir(targetDirPath)) {
-    const overwrite = argOverwrite
+    const overwrite = argv.overwrite
       ? true
       : await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
-          message: yellow(
+          message: warning(
             `Target "${targetDirPath}" is not a directory. Please choose how to proceed:`
           ),
           active: 'Delete the file and continue',
@@ -251,7 +270,7 @@ async function main() {
         const confirmDelete = await prompt<ConfirmOptions, ConfirmReturn>(
           confirm,
           {
-            message: yellow(
+            message: warning(
               `Are you sure you want to delete file "${targetDirPath}"?`
             ),
           }
@@ -273,10 +292,10 @@ async function main() {
   // 4. handle directory if exists and not empty
   const cwd = process.cwd();
   if (fs.existsSync(targetDirPath) && !isEmpty(targetDirPath)) {
-    const overwrite = argOverwrite
+    const overwrite = argv.overwrite
       ? 'yes'
       : await prompt(select, {
-          message: yellow(
+          message: warning(
             (targetDirPath === cwd
               ? 'Current directory'
               : `Target directory "${targetDirPath}"`) +
@@ -303,13 +322,13 @@ async function main() {
         const confirmDelete = await prompt<ConfirmOptions, ConfirmReturn>(
           confirm,
           {
-            message: yellow(
+            message: warning(
               `Are you sure you want to delete all files in "${targetDirPath}"?`
             ),
           }
         );
         if (confirmDelete) {
-          emptyDir(targetDir);
+          clearDir(targetDir);
         } else {
           cancel('Operation cancelled.');
           process.exit(1);
@@ -323,7 +342,7 @@ async function main() {
   }
 
   // 4. prompt for template
-  let template = TEMPLATES.find((t) => t.name === argTemplate);
+  let template = TEMPLATES.find((t) => t.name === argv.template);
   const noTemplatePrompt = template ? true : false;
   template ??= await prompt<SelectOptions<Template>, SelectReturn<Template>>(
     select,
@@ -371,7 +390,7 @@ async function main() {
       SelectOptions<string>,
       SelectReturn<string>
     >(select, {
-      message: yellow(
+      message: warning(
         'It is not possible to select both Husky and native git-hooks. Select which one to use:'
       ),
       options: [
@@ -399,7 +418,7 @@ async function main() {
   // 7. handle options that require another option to be selected
   if (options.includes('reactTestingLibrary') && !options.includes('vitest')) {
     const addVitest = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
-      message: yellow(
+      message: warning(
         'It is not possible to select React Testing Library without selecting Vitest. Add vitest?'
       ),
       active: 'Yes',

@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex */
 import { cancel, isCancel, log, outro } from '@clack/prompts';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -23,7 +24,15 @@ import { getScriptName } from '@shared/common';
 import { configureReadme } from './configurationScripts/configureReadme';
 
 const TEMPLATE_FILE_CONFIG_FILE_NAME = 'template.config.json';
+const errorColor = red;
 
+/**
+ * A wrapper for clack/prompts that handles prompt cancellation in a
+ * concistent manner.
+ * @param func The prompt function to be used.
+ * @param options Options for the prompt function.
+ * @returns Result of the prompt function.
+ */
 export async function prompt<T, R>(
   func: (options: T) => Promise<R>,
   options: T
@@ -36,41 +45,127 @@ export async function prompt<T, R>(
   return result as Awaited<Exclude<R, symbol>>;
 }
 
-export interface PathAndName {
-  path: string;
-  name: string;
+function isRootDir(inputPath: string) {
+  const normalized = path.resolve(inputPath);
+  const { root } = path.parse(normalized);
+  return normalized === root;
 }
 
-export function formatTargetDir(targetDir: string) {
-  targetDir = path.resolve(targetDir);
-  return targetDir.trim().replace(/\/+$/g, '');
-}
+function isValidPath(filePath: string) {
+  if (typeof filePath !== 'string' || filePath.length === 0) return false;
 
-export function getPathAndNameFromTargetDir(targetDir: string): PathAndName {
-  if (!targetDir) {
-    return { path: '', name: '' };
+  const windowsValidation =
+    /^(?!^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$)[^<>:"/\\|?*\x00-\x1F][^<>:"/\\|?*\x00-\x1F]{0,254}(?<![ .])$/;
+
+  // although ASCII control characters and filenames ending in a space or
+  // a period are allowed in POSIX, they are treated as invalid here.
+  const posixValidation = /^[^\x00-\x1F/][^\x00-\x1F/]{0,254}(?<![ .])$/;
+
+  const onWindows = process.platform === 'win32';
+  const parts = filePath.split(path.sep);
+  for (const part of parts) {
+    if (part === '' || part === '.' || part === '..') continue;
+    if (onWindows && !windowsValidation.test(part)) return false;
+    if (!onWindows && !posixValidation.test(part)) return false;
+    if (part.length > 255) return false;
   }
 
-  const normalized = path.normalize(targetDir);
-  const parts = normalized.split(path.sep).filter(Boolean);
-
-  if (parts.length <= 1) {
-    return { path: `.${path.sep}${parts[0]}`, name: parts[0] };
-  }
-
-  return { path: normalized, name: parts.at(-1) ?? '' };
+  return true;
 }
 
+/**
+ * Represents the result of a path validation operation.
+ * @property success - Discriminates between success (`true`) and failure
+ * (`false`) cases.
+ *
+ * When `success` is `true`:
+ * - `value` contains the validated string.
+ *
+ * When `success` is `false`:
+ * - `error` contains a description of the validation error.
+ */
+type ValidationResult =
+  | {
+      success: true;
+      /** The validated string value. */
+      value: string;
+    }
+  | {
+      success: false;
+      /** Description of the validation error. */
+      error: string;
+    };
+
+/**
+ * Resolves the path and checks that it is not the root directory and that it
+ * is a valid path.
+ *
+ * Notice that the validation does not allow ascii control characters in path
+ * names or that they end in a period or an empty space even in POSIX.
+ * @param targetDir Target directory path to resolve and validate.
+ * @returns Result of the validation operation as ValidationResult.
+ */
+export function resolveAndValidateTargetDirPath(
+  targetDirPath: string
+): ValidationResult {
+  if (!targetDirPath) {
+    return {
+      success: false,
+      error: 'Target directory path cannot be an empty string.',
+    };
+  }
+  const resolvedPath = path.resolve(targetDirPath);
+  if (isRootDir(resolvedPath)) {
+    return { success: false, error: 'Target directory cannot be the root.' };
+  }
+  if (!isValidPath(resolvedPath)) {
+    return {
+      success: false,
+      error: `Path "${resolvedPath}" is invalid. Path names must not end in a period or an empty space.`,
+    };
+  }
+  return { success: true, value: resolvedPath };
+}
+
+/**
+ * Splits the path by path.separator characters and returns the last part to be
+ * used as the project name.
+ * @param pathString Path string from which the name is extracted from.
+ * @returns Last part of the path (string) or an empty string.
+ */
+export function getProjectName(pathString: string) {
+  if (!pathString) {
+    return '';
+  }
+  const normalized = path.normalize(pathString);
+  const parts = normalized.split(path.sep);
+  return parts.at(-1) ?? '';
+}
+
+/**
+ * Validates that the name is a valid npm package name.
+ * @param projectName
+ * @returns
+ */
 export function isValidPackageName(projectName: string) {
   return /^(?:@[a-z\d\-*~][a-z\d\-*._~]*\/)?[a-z\d\-~][a-z\d\-._~]*$/.test(
     projectName
   );
 }
 
+/**
+ * Outputs to console.log a message using the error color.
+ * @param msg Message to output.
+ */
 export function logError(msg: string) {
-  console.log(red(msg));
+  console.log(errorColor(msg));
 }
 
+/**
+ * Tests whether the path leads to a directory.
+ * @param path Path to test.
+ * @returns True if the path leads to a directory and false otherwise.
+ */
 export function isDir(path: string): boolean {
   try {
     const stats = fs.statSync(path);
@@ -82,12 +177,23 @@ export function isDir(path: string): boolean {
   process.exit(1);
 }
 
+/**
+ * Tests whether the path leads to an empty directory.
+ *
+ * Notice! Expects the path to lead to a directory and throws otherwise.
+ * @param path Path to test.
+ * @returns True if the path leads to an empty directory, false otherwise.
+ */
 export function isEmpty(path: string) {
   const files = fs.readdirSync(path);
   return files.length === 0 || (files.length === 1 && files[0] === '.git');
 }
 
-export function emptyDir(dir: string) {
+/**
+ * Clears the directory of all of its contents (except .git/).
+ * @param dir Path to the directory as a string.
+ */
+export function clearDir(dir: string) {
   if (!fs.existsSync(dir)) {
     return;
   }
@@ -99,6 +205,14 @@ export function emptyDir(dir: string) {
   }
 }
 
+/**
+ * Creates a directory to a given path.
+ *
+ * If the creation of the directory fails, outputs the error using stop
+ * function of the given clack/prompts spinner object.
+ * @param dir Path to the directory as a string.
+ * @param s The clack/prompts spinner object to use for outputting error.
+ */
 export function createDir(dir: string, s: SpinnerObject) {
   try {
     fs.mkdirSync(dir, { recursive: true });
@@ -109,6 +223,9 @@ export function createDir(dir: string, s: SpinnerObject) {
   }
 }
 
+/**
+ * Copies the `srcDir` to `destDir` recursively.
+ */
 function copyDir(srcDir: string, destDir: string) {
   fs.mkdirSync(destDir, { recursive: true });
   for (const file of fs.readdirSync(srcDir)) {
@@ -118,6 +235,10 @@ function copyDir(srcDir: string, destDir: string) {
   }
 }
 
+/**
+ * Copies the `src` to `dest` using copyDir or fs.copyFileSync depending on
+ * whether the `src` is a directory or a file.
+ */
 function copy(src: string, dest: string) {
   const stat = fs.statSync(src);
   if (stat.isDirectory()) {
@@ -127,36 +248,22 @@ function copy(src: string, dest: string) {
   }
 }
 
-const renameFiles: Record<string, string | undefined> = {
-  _gitignore: '.gitignore',
-};
-
-const write = (
-  targetDir: string,
-  templateDir: string,
-  file: string,
-  content?: string
-) => {
-  const targetPath = path.join(targetDir, renameFiles[file] ?? file);
-  if (content) {
-    fs.writeFileSync(targetPath, content);
-  } else {
-    copy(path.join(templateDir, file), targetPath);
-  }
-};
-
+/**
+ * Copies template files from `templateDir` to `targetDir`.
+ *
+ * If the copying fails, outputs an error message using the given clack/prompts
+ * spinner object's stop method and exits with an error code.
+ * @param templateDir Path to the template directory.
+ * @param targetDir Path to the target directory.
+ * @param s The clack/prompts spinner object to use for outputting error.
+ */
 export function copyTemplate(
   templateDir: string,
   targetDir: string,
   s: SpinnerObject
 ) {
   try {
-    const files = fs.readdirSync(templateDir);
-    for (const file of files) {
-      if (!file.endsWith('.hbs')) {
-        write(targetDir, templateDir, file);
-      }
-    }
+    copyDir(templateDir, targetDir);
   } catch (error) {
     s.stop(red((error as Error).message), 1);
     outro(red('Operation stopped - Failed to copy template files.'));
@@ -164,6 +271,32 @@ export function copyTemplate(
   }
 }
 
+/**
+ * Returns the project dependencies based on the selected options, template
+ * dependencies and dependency overrides.
+ *
+ * Template dependencies are read from the package.json in the template
+ * directory. Dependencies are also added based on the selected options.
+ * Dependency overrides are specified in the Template object and
+ * they override any dependencies read from the template package.json or from
+ * the default option dependencies.
+ *
+ * If version numbers are left missing they are filled from the
+ * LATEST_DEPENDENCY_VERSIONS object.
+ *
+ * The returned object contains `Record<string, string>` objects corresponding
+ * to the package.json properties `dependencies`, `devDependencies` and
+ * `peerDependencies`.
+ * @param options Selected options.
+ * @param templateDependencies Dependencies read from the package.json in the
+ *    template directory.
+ * @param dependencyOverrides Dependencies read from the Template object that
+ *    override any dependencies from the template package.json or default
+ *    option dependencies.
+ * @returns An object containing `Record<string, string>` objects corresponding
+ *    to the package.json properties `dependencies`, `devDependencies` and
+ *    `peerDependencies`.
+ */
 function getDependencies(
   options: string[],
   templateDependencies: Dependencies,
@@ -177,6 +310,10 @@ function getDependencies(
   const peerDepOverridesAlways: [string, string][] = [];
   const peerDepOverridesByOption: [string, [string, string][]][] = [];
 
+  /**
+   * Parses name and required version from `item` and adds them into the given
+   * `alwaysArr` or `byOptionArr`.
+   */
   function parseOverrideNamesAndVersions(
     item: (OptionDependency | Package) | Package[],
     alwaysArr: [string, string][],
@@ -348,6 +485,13 @@ function getDependencies(
   };
 }
 
+/**
+ * Imports a configuration function dynamically from configurationScripts
+ * directory and runs it with the given parameters.
+ * @param scriptName Name of the script file withou file extension.
+ * @param s The clack/prompts spinner object to use for outputting error.
+ * @param param2 Parameters for the configuration function.
+ */
 async function runScript(
   scriptName: string,
   s: SpinnerObject,
@@ -394,6 +538,10 @@ async function runScript(
   }
 }
 
+/**
+ * Reads the template configuration file from the target directory, removes the
+ * file and returns its contents as an object.
+ */
 function readAndRemoveTemplateFileConfig(
   targetDirPath: string
 ): Record<string, string | TemplateConfig> {
@@ -402,15 +550,19 @@ function readAndRemoveTemplateFileConfig(
     targetDirPath,
     TEMPLATE_FILE_CONFIG_FILE_NAME
   );
-  return JSON.parse(fs.readFileSync(templateFileConfigPath, 'utf-8')) as Record<
-    string,
-    string | TemplateConfig
-  >;
+  const configFileJson = JSON.parse(
+    fs.readFileSync(templateFileConfigPath, 'utf-8')
+  ) as Record<string, string | TemplateConfig>;
 
   // remove template file config file from the target dir
   fs.rmSync(templateFileConfigPath);
+
+  return configFileJson;
 }
 
+/**
+ * Runs a configure function for each selected option.
+ */
 async function configureOptions(
   projectName: string,
   targetDirPath: string,
@@ -418,7 +570,6 @@ async function configureOptions(
   configFileTemplateDirPath: string,
   options: string[],
   templateFileConfigJson: Record<string, string | TemplateConfig>,
-  dependencies: Dependencies,
   s: SpinnerObject
 ) {
   // configure options
@@ -480,6 +631,11 @@ async function configureOptions(
   }
 }
 
+/**
+ * Sorts properties of a `Record<strin, string>` to an alphabetical order by
+ * the keys so that keys starting with "@" character come before keys starting
+ * with a letter.
+ */
 function sortObjectKeys<T extends Record<string, string>>(
   obj: T
 ): Record<string, string> {
@@ -500,6 +656,14 @@ function sortObjectKeys<T extends Record<string, string>>(
   return result;
 }
 
+/**
+ * Assigns scripts to a package.json scripts object based on the options.
+ *
+ * New values are assigned to the object given as an argument.
+ * @param options Selected options.
+ * @param scripts A `Record<string, string>` object containing scripts to which
+ *    the new scripts are added.
+ */
 function setScripts(options: string[], scripts: Record<string, string>) {
   if (options.includes('eslint')) {
     Object.assign(scripts, {
@@ -514,9 +678,25 @@ function setScripts(options: string[], scripts: Record<string, string>) {
       'test:coverage:watch': 'vitest watch --coverage',
     });
   }
-  return scripts;
 }
 
+/**
+ * Updates the created project with the selected options by doing required
+ * modifications to the configuration files and running configuration scripts
+ * corresponding to the selected options.
+ * @param targetDirPath Path to the directory where the new project was created.
+ * @param templateDirPath Path to the template directory.
+ * @param configFileTemplateDirPath Path to the configuration file template
+ *    directory.
+ * @param projectName Name of the created project.
+ * @param options The selected options.
+ * @param projectDependencyOverrides Dependency overrides from the template
+ *    object.
+ * @param packageManager Package manager to be used for installing the
+ *    dependencies if that is requested.
+ * @param installDeps Boolean indicateing whether to install the dependencies.
+ * @param s The clack/prompts spinner object to use for outputting error.
+ */
 export async function updateCreatedProject(
   targetDirPath: string,
   templateDirPath: string,
@@ -571,10 +751,7 @@ export async function updateCreatedProject(
   assignDependencies(dependencies.peerDependencies, 'peerDependencies');
 
   // add scripts to package.json
-  packageJson.scripts = setScripts(
-    options,
-    packageJson.scripts as Record<string, string>
-  );
+  setScripts(options, packageJson.scripts as Record<string, string>);
 
   // write modified package.json to the target directory
   fs.writeFileSync(
@@ -593,7 +770,6 @@ export async function updateCreatedProject(
     configFileTemplateDirPath,
     options,
     templateFileConfigJson,
-    dependencies,
     s
   );
 
