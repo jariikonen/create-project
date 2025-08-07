@@ -1,4 +1,6 @@
 {
   "eslint": "eslint.config.react.hbs",
+  "githooks": "pre-commit.hbs",
+  "husky": "pre-commit.hbs",
   "readme": "readme.react.hbs"
 }

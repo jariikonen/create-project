@@ -88,6 +88,10 @@ export function configureESLint(
     configFileTemplateDirPath,
     s
   );
+  if (!templateContent) {
+    s.stop('configureESLint(): Could not configure ESLint - no template.', 1);
+    return;
+  }
   const template = Handlebars.compile(templateContent);
   const output = template(configData);
 

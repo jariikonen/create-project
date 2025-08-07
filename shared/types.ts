@@ -155,6 +155,11 @@ export interface Import {
 
 /**
  * Represents a template configuration on a template.config.json file.
+ *
+ * The template.config.json file is of type Record<string, TemplateConfig>
+ * where the key is name of the thing to be configured, e.g., user selectable
+ * template option or other thing to be configured such as "readme", which
+ * refers to the README.md file.
  */
 export interface TemplateConfig {
   /** Name of the template file containing the extension (.hbs). */

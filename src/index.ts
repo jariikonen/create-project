@@ -32,6 +32,7 @@ import {
   logError,
   prompt,
   updateCreatedProject,
+  sortOptions,
 } from './functions';
 import { Template, TemplateOption } from '@shared/types';
 
@@ -363,6 +364,16 @@ async function main() {
 
   // 5. prompt for additional tools / options
   const initialValues = template.recommended ?? [];
+  const choices = template.options.map((o) => {
+    const label = initialValues.includes(o.name)
+      ? `${template.color(o.label + ' (recommended)')}`
+      : `${template.color(o.label)}`;
+    return {
+      value: o.name,
+      label,
+      hint: o.hint,
+    };
+  });
   let options = await prompt<
     MultiSelectOptions<string>,
     MultiSelectReturn<string>
@@ -371,17 +382,12 @@ async function main() {
     initialValues,
     required: false,
     maxItems: 10,
-    options: template.options.map((o) => {
-      const label = initialValues.includes(o.name)
-        ? `${template.color(o.label + ' (recommended)')}`
-        : `${template.color(o.label)}`;
-      return {
-        value: o.name,
-        label,
-        hint: o.hint,
-      };
-    }),
+    options: choices,
   });
+  // clack/prompts MultiSelect returns the selected options in the order they
+  // are selected, but this would mess the order of the options in README.md,
+  // so we sort the options to match the order they were specified
+  options = sortOptions(choices, options);
   options = [...options, ...(template.projectOptions ?? [])];
 
   // 6. handle mutually exclusive options

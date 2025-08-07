@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "typecheck": "tsc",
     "preview": "vite preview",
     "cleanup": "rm -rf ./dist && rm -rf ./coverage && rm -rf ./node_modules"
   },

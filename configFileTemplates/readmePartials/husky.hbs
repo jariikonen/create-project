@@ -1,0 +1,26 @@
+## Husky
+
+The template installs Husky Git hook framework. However, it cannot be
+configured before Git is initialized. So, you will have to do that after you
+have initialized Git.
+
+### Configuration
+
+Run `git init` to initialize git and then run the `prepare` script using your
+package manager (e.g., `pnpm run prepare`). This will create directory
+`.husky/` into the project root. There is also a pre-commit hook file
+(`pre-commit`) in the root of the project directory that you can use by
+copying it to the `.husky/` directory.
+
+### Pre-commit hook
+
+The pre-commit hook runs the linter (if you selected ESLint), the tests (if you
+selected Vitest), tsc for type checking and checks whether Git's worktree is
+empty.
+
+### More information
+
+Read more about Husky [here](https://typicode.github.io/husky/) or
+[here](https://github.com/typicode/husky), and more about Git hooks
+[here](https://git-scm.com/docs/githooks)
+or [here](https://git-scm.com/book/ms/v2/Customizing-Git-Git-Hooks).

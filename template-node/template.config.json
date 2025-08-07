@@ -4,5 +4,7 @@
     "template": "vitest.config.node.hbs",
     "script": "configureVitest.node"
   },
+  "githooks": "pre-commit.hbs",
+  "husky": "pre-commit.hbs",
   "readme": "readme.node.hbs"
 }

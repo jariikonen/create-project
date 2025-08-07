@@ -1,5 +1,5 @@
 /* eslint-disable no-control-regex */
-import { cancel, isCancel, log, outro } from '@clack/prompts';
+import { cancel, isCancel, log, Option, outro } from '@clack/prompts';
 import path from 'node:path';
 import fs from 'node:fs';
 import { red } from 'picocolors';
@@ -20,8 +20,9 @@ import {
 import { configureESLint } from './configurationScripts/configureESLint';
 import { configurePrettier } from './configurationScripts/configurePrettier';
 import { configureEditorConfig } from './configurationScripts/configureEditorConfig';
-import { getScriptName } from '@shared/common';
+import { copyDir, getScriptName } from '@shared/common';
 import { configureReadme } from './configurationScripts/configureReadme';
+import { configureHusky } from './configurationScripts/configureHusky';
 
 const TEMPLATE_FILE_CONFIG_FILE_NAME = 'template.config.json';
 const errorColor = red;
@@ -43,6 +44,16 @@ export async function prompt<T, R>(
     return process.exit(0);
   }
   return result as Awaited<Exclude<R, symbol>>;
+}
+
+/**
+ * Creates a new array of selected that is sorted to match the order of
+ * choices.
+ */
+export function sortOptions(choices: Option<string>[], selected: string[]) {
+  return choices
+    .map((choice) => choice.value)
+    .filter((value) => selected.includes(value));
 }
 
 function isRootDir(inputPath: string) {
@@ -220,31 +231,6 @@ export function createDir(dir: string, s: SpinnerObject) {
     s.stop(red((error as Error).message), 1);
     outro(red('Operation stopped - Failed to create directory.'));
     process.exit(1);
-  }
-}
-
-/**
- * Copies the `srcDir` to `destDir` recursively.
- */
-function copyDir(srcDir: string, destDir: string) {
-  fs.mkdirSync(destDir, { recursive: true });
-  for (const file of fs.readdirSync(srcDir)) {
-    const srcFile = path.resolve(srcDir, file);
-    const destFile = path.resolve(destDir, file);
-    copy(srcFile, destFile);
-  }
-}
-
-/**
- * Copies the `src` to `dest` using copyDir or fs.copyFileSync depending on
- * whether the `src` is a directory or a file.
- */
-function copy(src: string, dest: string) {
-  const stat = fs.statSync(src);
-  if (stat.isDirectory()) {
-    copyDir(src, dest);
-  } else {
-    fs.copyFileSync(src, dest);
   }
 }
 
@@ -570,6 +556,7 @@ async function configureOptions(
   configFileTemplateDirPath: string,
   options: string[],
   templateFileConfigJson: Record<string, string | TemplateConfig>,
+  packageManager: string,
   s: SpinnerObject
 ) {
   // configure options
@@ -605,9 +592,13 @@ async function configureOptions(
         1
       );
     } else if (option === 'husky') {
-      s.stop(
-        `configureOptions(): Configuration for "${option}" is not yet implemented.`,
-        1
+      configureHusky(
+        targetDirPath,
+        templateFileConfigJson,
+        configFileTemplateDirPath,
+        options,
+        packageManager,
+        s
       );
     } else if (option === 'githubActions') {
       s.stop(
@@ -676,6 +667,11 @@ function setScripts(options: string[], scripts: Record<string, string>) {
       'test:watch': 'vitest watch',
       'test:coverage': 'vitest run --coverage',
       'test:coverage:watch': 'vitest watch --coverage',
+    });
+  }
+  if (options.includes('husky')) {
+    Object.assign(scripts, {
+      prepare: 'husky',
     });
   }
 }
@@ -770,6 +766,7 @@ export async function updateCreatedProject(
     configFileTemplateDirPath,
     options,
     templateFileConfigJson,
+    packageManager,
     s
   );
 

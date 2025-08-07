@@ -17,18 +17,33 @@ export function getScriptName(config: string | TemplateConfig) {
   return null;
 }
 
+/**
+ * Returns configuration file template content based on the filename in
+ * `templateConfigJson`.
+ *
+ * Returns the template contents or null, if the template filename is not
+ * found.
+ * @param templateConfigJson The template's `template.config.json` file's
+ *    contents as an object.
+ * @param configObjectName Name of the configurable thing (e.g., template
+ *    option).
+ * @param configFileTemplateDirPath Path to the directory where the
+ *    configuration file templates are located.
+ * @param s The clack/prompts spinner object to use for outputting error.
+ * @returns Template contents or null if the template filename is not found.
+ */
 export function getConfigFileTemplateContent(
   templateConfigJson: Record<string, string | TemplateConfig>,
-  configFileName: string,
+  configObjectName: string,
   configFileTemplateDirPath: string,
   s: SpinnerObject
 ) {
   const configFileTemplateName = getTemplateName(
-    templateConfigJson[configFileName]
+    templateConfigJson[configObjectName]
   );
   if (!configFileTemplateName) {
     s.stop(
-      `No configuration for ${configFileName} in template config file.`,
+      `No configuration for ${configObjectName} in template config file.`,
       1
     );
     return null;
@@ -38,6 +53,31 @@ export function getConfigFileTemplateContent(
     configFileTemplateName
   );
   return fs.readFileSync(templatePath, 'utf-8');
+}
+
+/**
+ * Copies the `srcDir` to `destDir` recursively.
+ */
+export function copyDir(srcDir: string, destDir: string) {
+  fs.mkdirSync(destDir, { recursive: true });
+  for (const file of fs.readdirSync(srcDir)) {
+    const srcFile = path.resolve(srcDir, file);
+    const destFile = path.resolve(destDir, file);
+    copy(srcFile, destFile);
+  }
+}
+
+/**
+ * Copies the `src` to `dest` using copyDir or fs.copyFileSync depending on
+ * whether the `src` is a directory or a file.
+ */
+export function copy(src: string, dest: string) {
+  const stat = fs.statSync(src);
+  if (stat.isDirectory()) {
+    copyDir(src, dest);
+  } else {
+    fs.copyFileSync(src, dest);
+  }
 }
 
 export function copyFile(

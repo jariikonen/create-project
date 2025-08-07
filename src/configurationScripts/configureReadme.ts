@@ -17,6 +17,8 @@ function mapOptionsToData(options: string[], s: SpinnerObject) {
         return { display: 'EditorConfig', link: 'editorconfig' };
       case 'vitest':
         return { display: 'Vitest', link: 'vitest' };
+      case 'husky':
+        return { display: 'Husky', link: 'husky' };
       case 'reactTestingLibrary':
         return {
           display: 'React Testing Library',
@@ -94,6 +96,13 @@ export function configureReadme(
     configFileTemplateDirPath,
     s
   );
+  if (!templateContent) {
+    s.stop(
+      'configureReadme(): Could not configure README.md - no template.',
+      1
+    );
+    return;
+  }
   const template = Handlebars.compile(templateContent);
   const output = template(configData);
 

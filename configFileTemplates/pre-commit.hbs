@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# check the code quality
+{{#if eslint}}
+{{packageManager}} run lint
+{{/if}}
+{{#if vitest}}
+{{packageManager}} run test
+{{else}}
+{{packageManager}} run typecheck
+{{/if}}
+
+red='\033[0;31m'
+cyan='\033[0;36m'
+no_color='\033[0m'
+
+# check if the git worktree is clean
+uncommitted="$(git status --porcelain | awk '{if (substr($0,2,1) == "M" || substr($0,2,1) == "?") print}')"
+if [ ! -z "$uncommitted" ]
+then
+    printf "${red}Worktree is not clean - there are changes that are not going to be committed.\n\n"
+    echo "$uncommitted"
+    printf "\n"
+    printf "${cyan}If this is okay, you can continue with the commit by prefixing the command with \"HUSKY=0\" or using \"--no-verify\" flag.\n${no_color}"
+    exit 1
+fi

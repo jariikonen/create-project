@@ -72,6 +72,9 @@ export const DEFAULT_DEPENDENCIES: Record<string, DefaultDependencies> = {
       },
     },
   },
+  husky: {
+    devDependencies: ['husky'],
+  },
   reactTestingLibrary: {
     devDependencies: ['@testing-library/react', '@testing-library/jest-dom'],
   },
