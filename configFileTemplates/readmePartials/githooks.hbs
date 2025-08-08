@@ -1,0 +1,29 @@
+## Git hooks
+
+The template constains a directory `git-hooks` for project's Git hooks, which
+is meant to be committed into the repository. There is also a `prepare` script
+in the `package.json` that will configure it as Git's hooksPath after you have
+initialized Git and installed the dependencies.
+
+### Configuration
+
+Run `git init` to initialize git and install the dependencies, which will
+automatically run the configuration script. Or, if you installed the
+dependencies first, run the `prepare` script using your package manager
+(e.g., `pnpm run prepare`). This will set Git's hooksPath, so it will look for
+the hooks from `git-hooks/`.
+
+*Important notice!* The hook files must be executable. The pre-installed
+pre-commit hook should already be executable, but if you are adding more hooks,
+keep that in mind.
+
+### Pre-commit hook
+
+The pre-commit hook runs the linter (if you selected ESLint), the tests (if you
+selected Vitest), tsc for type checking and checks whether Git's worktree is
+empty.
+
+### More information
+
+Read more about Git hooks [here](https://git-scm.com/docs/githooks)
+and [here](https://git-scm.com/book/ms/v2/Customizing-Git-Git-Hooks).

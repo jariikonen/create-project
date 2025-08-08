@@ -207,7 +207,7 @@ async function main() {
     }
   }
 
-  //
+  // form suggestion for the project's name based on the target directory path
   let argProjectName = getProjectName(argTargetDir!);
   let targetDir = argTargetDir;
   if (argProjectName && !isValidPackageName(argProjectName)) {

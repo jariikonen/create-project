@@ -23,6 +23,7 @@ import { configureEditorConfig } from './configurationScripts/configureEditorCon
 import { copyDir, getAdditionalArguments, getScriptName } from '@shared/common';
 import { configureReadme } from './configurationScripts/configureReadme';
 import { configureHusky } from './configurationScripts/configureHusky';
+import { configureNativeGitHooks } from './configurationScripts/configureNativeGitHooks';
 
 const TEMPLATE_FILE_CONFIG_FILE_NAME = 'template.config.json';
 const errorColor = red;
@@ -567,7 +568,6 @@ async function configureOptions(
   packageManager: string,
   s: SpinnerObject
 ) {
-  // configure options
   for (const option of options) {
     if (option === 'eslint') {
       configureESLint(
@@ -604,9 +604,13 @@ async function configureOptions(
         s,
       });
     } else if (option === 'githooks') {
-      s.stop(
-        `configureOptions(): Configuration for "${option}" is not yet implemented.`,
-        1
+      configureNativeGitHooks(
+        targetDirPath,
+        templateFileConfigJson,
+        configFileTemplateDirPath,
+        options,
+        packageManager,
+        s
       );
     } else if (option === 'husky') {
       configureHusky(
@@ -684,6 +688,11 @@ function setScripts(options: string[], scripts: Record<string, string>) {
       'test:watch': 'vitest watch',
       'test:coverage': 'vitest run --coverage',
       'test:coverage:watch': 'vitest watch --coverage',
+    });
+  }
+  if (options.includes('githooks')) {
+    Object.assign(scripts, {
+      prepare: 'git config core.hooksPath git-hooks',
     });
   }
   if (options.includes('husky')) {

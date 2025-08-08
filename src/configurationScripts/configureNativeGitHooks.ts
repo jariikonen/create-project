@@ -6,7 +6,7 @@ import { getConfigFileTemplateContent } from '@shared/common';
 
 const CONFIG_FILE_NAME = 'pre-commit';
 
-export function configureHusky(
+export function configureNativeGitHooks(
   targetDirPath: string,
   templateFileConfigJson: Record<string, string | TemplateConfig>,
   configFileTemplateDirPath: string,
@@ -22,25 +22,31 @@ export function configureHusky(
   const configData = {
     eslint: options.includes('eslint'),
     vitest: options.includes('vitest'),
-    husky: true,
     packageManager,
   };
 
   // apply data on the template
   const templateContent = getConfigFileTemplateContent(
     templateFileConfigJson,
-    'husky',
+    'githooks',
     configFileTemplateDirPath,
     s
   );
   if (!templateContent) {
-    s.stop('configureHusky(): Could not configure Husky - no template.', 1);
+    s.stop(
+      'configureNativeGitHooks(): Could not configure Git-hooks - no template.',
+      1
+    );
     return;
   }
   const template = Handlebars.compile(templateContent);
   const output = template(configData);
 
-  // write to file
-  const outputPath = path.resolve(targetDirPath, CONFIG_FILE_NAME);
-  fs.writeFileSync(outputPath, output);
+  // create git-hooks/ directory, write the pre-commit hook file and make it
+  // executable
+  const hooksDirPath = path.resolve(targetDirPath, 'git-hooks');
+  const filePath = path.resolve(hooksDirPath, CONFIG_FILE_NAME);
+  fs.mkdirSync(hooksDirPath);
+  fs.writeFileSync(filePath, output);
+  fs.chmodSync(filePath, '755');
 }

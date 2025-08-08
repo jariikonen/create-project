@@ -28,8 +28,7 @@ export function getAdditionalArguments(config: string | TemplateConfig) {
  * Returns configuration file template content based on the filename in
  * `templateConfigJson`.
  *
- * Returns the template contents or null, if the template filename is not
- * found.
+ * Returns the template contents or null, if the template file is not found.
  * @param templateConfigJson The template's `template.config.json` file's
  *    contents as an object.
  * @param configObjectName Name of the configurable thing (e.g., template

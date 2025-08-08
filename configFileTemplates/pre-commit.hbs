@@ -1,14 +1,18 @@
 #!/bin/sh
 
 # check the code quality
+{{packageManager}} run typecheck &&
 {{#if eslint}}
-{{packageManager}} run lint
+{{packageManager}} run lint &&
 {{/if}}
 {{#if vitest}}
 {{packageManager}} run test
-{{else}}
-{{packageManager}} run typecheck
 {{/if}}
+
+if [ $? -ne 0 ]; then
+    echo "Stopping the commit due to the previous error(s)."
+    exit 1
+fi
 
 red='\033[0;31m'
 cyan='\033[0;36m'
@@ -21,6 +25,9 @@ then
     printf "${red}Worktree is not clean - there are changes that are not going to be committed.\n\n"
     echo "$uncommitted"
     printf "\n"
-    printf "${cyan}If this is okay, you can continue with the commit by prefixing the command with \"HUSKY=0\" or using \"--no-verify\" flag.\n${no_color}"
+    printf "${cyan}If this is okay, you can continue with the commit by using \"--no-verify\" flag with the commit command.\n${no_color}"
+    {{#if husky}}
+    printf "${cyan}You can also bypass this hook by setting the environment variable HUSKY as 0 (e.g., prefixing the command with \"HUSKY=0\").\n${no_color}"
+    {{/if}}
     exit 1
 fi

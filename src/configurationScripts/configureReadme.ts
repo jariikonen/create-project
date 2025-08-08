@@ -17,6 +17,8 @@ function mapOptionsToData(options: string[], s: SpinnerObject) {
         return { display: 'EditorConfig', link: 'editorconfig' };
       case 'vitest':
         return { display: 'Vitest', link: 'vitest' };
+      case 'githooks':
+        return { display: 'Git hooks', link: 'git-hooks' };
       case 'husky':
         return { display: 'Husky', link: 'husky' };
       case 'reactTestingLibrary':
