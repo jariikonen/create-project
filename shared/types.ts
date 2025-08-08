@@ -165,10 +165,17 @@ export interface TemplateConfig {
   /** Name of the template file containing the extension (.hbs). */
   template?: string;
   /**
-   * Name of a dynamically imported configuration file without the file
-   * extension.
+   * Name of a dynamically imported configuration script file.
+   *
+   * Filename may contain file extension .js or .ts, but it is not necessary.
+   * These file extension are replaced with .js when looking for the script
+   * file. Any other file extensions are assumed to be part of the file name
+   * and extension .js is added to the end. The first part of the name
+   * (separated by a period) is treated as the name of the function.
    */
   script?: string;
+  /** Additional arguments for the configuration script. */
+  other?: Record<string, unknown>;
 }
 
 /**
@@ -188,4 +195,22 @@ export interface ConfigureScriptProps {
   configFileTemplateDirPath: string;
   /** List of selected options. */
   options: string[];
+  /** List of additional arguments given in template.config.json. */
+  additionalArguments?: Record<string, unknown>;
+  /**
+   * A clack/prompts spinner object for outputting errors and other messages.
+   */
+  s?: SpinnerObject;
+}
+
+/**
+ * Represents the template.config.json additional arguments object for vitest.
+ */
+export interface AdditionalArgumentsVitest {
+  /** The filename to add into tsconfig's include property. */
+  testSetupFileName?: string;
+  /** The tsconfig file to which the filename is added. */
+  testSetupTsconfig?: string;
+  /** The tsconfig file to which the vitest/globals types property is added. */
+  globalsTsconfig: string;
 }

@@ -3,3 +3,10 @@
 The template is configured with Vitest test runner. It is configured so that
 the tests are expacted to be under src/ and collected in `__tests__/`
 subdirectories. Read more about Vitest [here](https://vitest.dev/guide/).
+
+{{#if optionData.reactTestingLibrary}}
+### Setup file
+
+There is also a simple setup file `testSetup.ts`. It uses `cleanup()` function
+from `@testing-library/react` to cleanup after each test.
+{{/if}}

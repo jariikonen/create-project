@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { parse } from 'comment-json';
+import { CommentArray, parse, stringify } from 'comment-json';
 import { SpinnerObject, TemplateConfig } from '@shared/types';
 
 export function getTemplateName(config: string | TemplateConfig) {
@@ -15,6 +15,13 @@ export function getScriptName(config: string | TemplateConfig) {
     return config.script;
   }
   return null;
+}
+
+export function getAdditionalArguments(config: string | TemplateConfig) {
+  if (typeof config === 'object') {
+    return config.other;
+  }
+  return undefined;
 }
 
 /**
@@ -92,16 +99,75 @@ export function copyFile(
   fs.copyFileSync(srcFile, destFile);
 }
 
+/**
+ * Includes `filename` in tsconfig file in `tsconfigPath`.
+ *
+ * Uses comment-json for parsing and strigifying json.
+ * @param filename Filename to add to the tsconfig's include property.
+ * @param tsconfigPath Path to the tsconfig file.
+ */
 export function includeFileInTsconfig(filename: string, tsconfigPath: string) {
   const tsconfigJson = parse(
     fs.readFileSync(tsconfigPath, 'utf-8')
   ) as unknown as {
     include: string[];
   };
-  tsconfigJson.include = [...tsconfigJson.include, filename];
+  tsconfigJson.include = new CommentArray<string>(
+    ...tsconfigJson.include,
+    filename
+  );
   fs.writeFileSync(
     tsconfigPath,
-    JSON.stringify(tsconfigJson, null, 2) + '\n',
+    stringify(tsconfigJson, null, 2) + '\n',
+    'utf-8'
+  );
+}
+
+export function addGlobalsToTsconfig(
+  targetDirPath: string,
+  globalsTsconfig: string
+) {
+  const tsconfigPath = path.join(targetDirPath, globalsTsconfig);
+  addTypesToTsconfig('vitest/globals', tsconfigPath, 'Vitest');
+}
+
+export function addTypesToTsconfig(
+  typesDescriptor: string,
+  tsconfigPath: string,
+  comment?: string
+) {
+  const tsconfigJson = parse(
+    fs.readFileSync(tsconfigPath, 'utf-8')
+  ) as unknown as {
+    compilerOptions: { types: string[] };
+  };
+  const newTypes = tsconfigJson.compilerOptions.types
+    ? new CommentArray<string>(
+        ...tsconfigJson.compilerOptions.types,
+        typesDescriptor
+      )
+    : new CommentArray<string>(typesDescriptor);
+  tsconfigJson.compilerOptions.types = newTypes;
+
+  if (comment) {
+    const compilerOptions = tsconfigJson.compilerOptions as unknown as {
+      [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      [key: symbol]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    };
+    if (compilerOptions) {
+      compilerOptions[Symbol.for('before:types')] = [
+        {
+          type: 'BlockComment',
+          value: ` ${comment} `,
+          inline: false,
+        },
+      ];
+    }
+  }
+
+  fs.writeFileSync(
+    tsconfigPath,
+    stringify(tsconfigJson, null, 2) + '\n',
     'utf-8'
   );
 }

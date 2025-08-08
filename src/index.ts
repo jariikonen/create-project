@@ -216,7 +216,6 @@ async function main() {
     targetDir = DEFAULT_PATH;
   }
 
-  console.log('onWindows:', process.platform === 'win32');
   console.log(); // empty line before the prompts
 
   // intro
@@ -364,7 +363,7 @@ async function main() {
 
   // 5. prompt for additional tools / options
   const initialValues = template.recommended ?? [];
-  const choices = template.options.map((o) => {
+  const optionChoices = template.options.map((o) => {
     const label = initialValues.includes(o.name)
       ? `${template.color(o.label + ' (recommended)')}`
       : `${template.color(o.label)}`;
@@ -382,13 +381,8 @@ async function main() {
     initialValues,
     required: false,
     maxItems: 10,
-    options: choices,
+    options: optionChoices,
   });
-  // clack/prompts MultiSelect returns the selected options in the order they
-  // are selected, but this would mess the order of the options in README.md,
-  // so we sort the options to match the order they were specified
-  options = sortOptions(choices, options);
-  options = [...options, ...(template.projectOptions ?? [])];
 
   // 6. handle mutually exclusive options
   if (options.includes('husky') && options.includes('githooks')) {
@@ -435,14 +429,22 @@ async function main() {
     }
   }
 
-  // 8. prompt whether the dependencies should be installed
+  // 8. sort options
+  // clack/prompts MultiSelect returns the selected options in the order they
+  // are selected, but this would mess the order of the options in README.md,
+  // so we sort the options to match the order they were specified in
+  // optionChoices
+  options = sortOptions(optionChoices, options);
+  options = [...options, ...(template.projectOptions ?? [])];
+
+  // 9. prompt whether the dependencies should be installed
   const installDeps = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
     message: 'Install dependencies?',
     active: 'Yes',
     inactive: 'No',
   });
 
-  // 9. prompt for package manager (if dependencies are installed)
+  // 10. prompt for package manager (if dependencies are installed)
   let packageManager = 'npm';
   if (installDeps) {
     packageManager = await prompt<SelectOptions<string>, SelectReturn<string>>(
@@ -463,7 +465,7 @@ async function main() {
     );
   }
 
-  // 10. scaffold the project
+  // 11. scaffold the project
   const s = spinner();
 
   const templateDirPath = path.resolve(
@@ -499,7 +501,7 @@ async function main() {
   );
   s.stop(`Project has been tailored to match your settings.`);
 
-  // 10. output next steps
+  // 12. output next steps
 
   // outro
   outro("You're all set!");

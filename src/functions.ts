@@ -20,7 +20,7 @@ import {
 import { configureESLint } from './configurationScripts/configureESLint';
 import { configurePrettier } from './configurationScripts/configurePrettier';
 import { configureEditorConfig } from './configurationScripts/configureEditorConfig';
-import { copyDir, getScriptName } from '@shared/common';
+import { copyDir, getAdditionalArguments, getScriptName } from '@shared/common';
 import { configureReadme } from './configurationScripts/configureReadme';
 import { configureHusky } from './configurationScripts/configureHusky';
 
@@ -487,15 +487,19 @@ async function runScript(
     templateDirPath,
     configFileTemplateDirPath,
     options,
+    additionalArguments,
   }: ConfigureScriptProps
 ) {
-  const scriptNameToUse = scriptName.endsWith('.js')
-    ? scriptName.substring(0, scriptName.length - 3)
-    : scriptName;
-  const functionName = scriptNameToUse.split('.')[0];
+  const scriptNameParts = scriptName.split('.');
+  const fileExtension = scriptNameParts.at(-1);
+  const scriptNameToUse =
+    fileExtension && /js|ts/.test(fileExtension)
+      ? scriptNameParts.slice(0, -1).join('.')
+      : scriptName;
+  const functionName = scriptNameParts[0];
   try {
     const module: unknown = await import(
-      `./configurationScripts/${scriptName}.js`
+      `./configurationScripts/${scriptNameToUse}.js`
     );
     (
       module as {
@@ -504,7 +508,9 @@ async function runScript(
           targetDirPath: ConfigureScriptProps['targetDirPath'],
           templateDirPath: ConfigureScriptProps['templateDirPath'],
           configFileTemplateDirPath: ConfigureScriptProps['configFileTemplateDirPath'],
-          options: ConfigureScriptProps['options']
+          options: ConfigureScriptProps['options'],
+          additionalArguments: ConfigureScriptProps['additionalArguments'],
+          s: ConfigureScriptProps['s']
         ) => void;
       }
     )[functionName](
@@ -512,13 +518,15 @@ async function runScript(
       targetDirPath,
       templateDirPath,
       configFileTemplateDirPath,
-      options
+      options,
+      additionalArguments,
+      s
     );
   } catch (error) {
     s.stop(
-      `Unable to run configure script "${scriptNameToUse}": ${
+      `runScript(): Unable to run configuration script "${scriptNameToUse}": ${
         (error as Error).message
-      }`,
+      } ${(error as Error).stack}`,
       1
     );
   }
@@ -574,18 +582,27 @@ async function configureOptions(
     } else if (option === 'editorconfig') {
       configureEditorConfig(targetDirPath, configFileTemplateDirPath);
     } else if (option === 'vitest') {
-      const configScriptName = getScriptName(
-        (templateFileConfigJson as { vitest: string | TemplateConfig }).vitest
-      );
-      if (configScriptName) {
-        await runScript(configScriptName, s, {
-          projectName,
-          targetDirPath,
-          templateDirPath,
-          configFileTemplateDirPath,
-          options,
-        });
+      const vitestConfig = (
+        templateFileConfigJson as { vitest: string | TemplateConfig }
+      ).vitest;
+      const configScriptName = getScriptName(vitestConfig);
+      if (!configScriptName) {
+        s.stop(
+          `configureOptions(): No configuration for "${option}" in template.config.json`,
+          1
+        );
+        continue;
       }
+      const additionalArguments = getAdditionalArguments(vitestConfig);
+      await runScript(configScriptName, s, {
+        projectName,
+        targetDirPath,
+        templateDirPath,
+        configFileTemplateDirPath,
+        options,
+        additionalArguments,
+        s,
+      });
     } else if (option === 'githooks') {
       s.stop(
         `configureOptions(): Configuration for "${option}" is not yet implemented.`,
@@ -756,9 +773,8 @@ export async function updateCreatedProject(
     'utf-8'
   );
 
-  const templateFileConfigJson = readAndRemoveTemplateFileConfig(targetDirPath);
-
   // configure optional tools
+  const templateFileConfigJson = readAndRemoveTemplateFileConfig(targetDirPath);
   await configureOptions(
     projectName,
     targetDirPath,

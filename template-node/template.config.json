@@ -2,7 +2,10 @@
   "eslint": "eslint.config.node.hbs",
   "vitest": {
     "template": "vitest.config.node.hbs",
-    "script": "configureVitest.node"
+    "script": "configureVitest.node",
+    "other": {
+      "globalsTsconfig": "tsconfig.json"
+    }
   },
   "githooks": "pre-commit.hbs",
   "husky": "pre-commit.hbs",

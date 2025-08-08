@@ -1,5 +1,14 @@
 {
   "eslint": "eslint.config.react.hbs",
+  "vitest": {
+    "template": "vitest.config.react.hbs",
+    "script": "configureVitest.react",
+    "other": {
+      "testSetupFileName": "testSetup.ts",
+      "testSetupTsconfig": "tsconfig.node.json",
+      "globalsTsconfig": "tsconfig.app.json"
+    }
+  },
   "githooks": "pre-commit.hbs",
   "husky": "pre-commit.hbs",
   "readme": "readme.react.hbs"
