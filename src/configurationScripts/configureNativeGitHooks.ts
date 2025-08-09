@@ -14,10 +14,6 @@ export function configureNativeGitHooks(
   packageManager: string,
   s: SpinnerObject
 ) {
-  Handlebars.registerHelper('join', function (arr: string[], sep: string) {
-    return arr.join(sep);
-  });
-
   // collect config data to be applied on the template
   const configData = {
     eslint: options.includes('eslint'),
