@@ -103,13 +103,13 @@ const OPTION_VITEST: TemplateOption = {
 const OPTION_GITHOOKS: TemplateOption = {
   name: 'githooks',
   label: 'Native git-hooks',
-  hint: 'Configure a basic set of native git-hooks.',
+  hint: 'Configure a directory for native git-hooks and add a pre-commit hook.',
 };
 
 const OPTION_HUSKY: TemplateOption = {
   name: 'husky',
   label: 'Husky',
-  hint: 'Configure a basic set of git-hooks using Husky git-hook manager.',
+  hint: 'Configure Husky git-hook manager and add a pre-commit hook.',
 };
 
 const OPTION_GITHUB_ACTIONS: TemplateOption = {
@@ -157,7 +157,7 @@ const OPTION_PUBLISH_NPM: TemplateOption = {
 const OPTION_RELEASE_PLEASE: TemplateOption = {
   name: 'releasePlease',
   label: 'Release Please',
-  hint: 'Crreates new releases automatically based on conventional commit messages.',
+  hint: 'Creates new releases automatically based on conventional commit messages.',
 };
 
 /** GH Actions Workflow options. */
