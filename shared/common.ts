@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import Handlebars from 'handlebars';
 import { CommentArray, parse, stringify } from 'comment-json';
 import { SpinnerObject, TemplateConfig } from '@shared/types';
 
@@ -169,4 +170,21 @@ export function addTypesToTsconfig(
     stringify(tsconfigJson, null, 2) + '\n',
     'utf-8'
   );
+}
+
+export function registerPartials(
+  partials: { filename: string; name: string }[],
+  partialDirPath: string
+) {
+  partials.forEach((data) => {
+    const partialContent = fs.readFileSync(
+      path.join(partialDirPath, data.filename),
+      'utf8'
+    );
+    Handlebars.registerPartial(data.name, partialContent);
+  });
+}
+
+export function camelToKebab(str: string) {
+  return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }

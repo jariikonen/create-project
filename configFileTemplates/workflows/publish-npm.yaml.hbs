@@ -1,0 +1,23 @@
+name: Publish-npm
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      {{> installDepsPartial nodeVersion="22.x" registryUrl="https://registry.npmjs.org" }}
+      
+      - name: Publish package
+        env:
+          NODE_AUTH_TOKEN: ${{encloseInDoubleCurly "secrets.NPM_TOKEN"}}
+        run: |
+          {{#if (eq packageManager "npm")}}
+          npm publish
+          {{else if (eq packageManager "pnpm")}}
+          pnpm publish --no-git-checks
+          {{/if}}

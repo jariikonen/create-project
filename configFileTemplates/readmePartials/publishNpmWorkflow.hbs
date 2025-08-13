@@ -1,0 +1,13 @@
+### Publish package to npm registry (publish-npm.yaml)
+
+The Publish-npm workflow publishes the package to the npm registry after a new
+release is created. It runs on a
+[release event](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#release)
+that has the type `published` and it can also be dispatched manually.
+
+**Notice!** You also need to add the
+[npm publish token](https://docs.npmjs.com/creating-and-viewing-access-tokens)
+as an action secret named NPM_TOKEN in the repository.
+
+Read more about publishing of npm packages [here](https://docs.npmjs.com/).
+

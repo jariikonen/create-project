@@ -2,11 +2,11 @@ import path from 'node:path';
 import fs from 'node:fs';
 import Handlebars from 'handlebars';
 import { SpinnerObject, TemplateConfig } from '@shared/types';
-import { getConfigFileTemplateContent } from '@shared/common';
+import { getConfigFileTemplateContent, registerPartials } from '@shared/common';
 
 const README_FILE_NAME = 'README.md';
 
-function mapOptionsToData(options: string[], s: SpinnerObject) {
+function mapOptionsToDisplayData(options: string[], s: SpinnerObject) {
   function getValue(optionName: string) {
     switch (optionName) {
       case 'eslint':
@@ -26,12 +26,17 @@ function mapOptionsToData(options: string[], s: SpinnerObject) {
           display: 'React Testing Library',
           link: 'react-testing-library',
         };
+      case 'githubActions':
+        return {
+          display: 'GitHub Actions Workflows',
+          link: 'github-actions-workflows',
+        };
       case 'react':
       case 'lib':
         return;
       default:
         s.stop(
-          `configureReadme.mapOptions(): There is no case for "${optionName}"`,
+          `configureReadme.mapOptionsToData(): There is no case for "${optionName}"`,
           1
         );
     }
@@ -45,17 +50,8 @@ function mapOptionsToData(options: string[], s: SpinnerObject) {
   );
 }
 
-function registerPartials(
-  partials: { filename: string; name: string }[],
-  configFileTemplateDirPath: string
-) {
-  partials.forEach((data) => {
-    const partialContent = fs.readFileSync(
-      path.join(configFileTemplateDirPath, 'readmePartials', data.filename),
-      'utf8'
-    );
-    Handlebars.registerPartial(data.name, partialContent);
-  });
+function mapWorkflows(workflows: string[]) {
+  return Object.fromEntries(workflows.map((key) => [key, true]));
 }
 
 export function configureReadme(
@@ -63,6 +59,7 @@ export function configureReadme(
   configFileTemplateDirPath: string,
   templateFileConfigJson: Record<string, string | TemplateConfig>,
   options: string[],
+  workflows: string[],
   s: SpinnerObject
 ) {
   // register partials
@@ -81,14 +78,22 @@ export function configureReadme(
         filename: 'reactTestingLibrary.hbs',
         name: 'reactTestingLibraryPartial',
       },
+      { filename: 'ciWorkflow.hbs', name: 'ciPartial' },
+      {
+        filename: 'releasePleaseWorkflow.hbs',
+        name: 'releasePleasePartial',
+      },
+      { filename: 'publishNpmWorkflow.hbs', name: 'publishNpmPartial' },
     ],
-    configFileTemplateDirPath
+    path.join(configFileTemplateDirPath, 'readmePartials')
   );
 
   // collect config data to be applied on the template
   const configData = {
     options,
-    optionData: { ...mapOptionsToData(options, s) },
+    optionData: { ...mapOptionsToDisplayData(options, s) },
+    workflowsToInclude: { ...mapWorkflows(workflows) },
+    includeWorkflows: workflows.length > 0,
   };
 
   // apply data on the template

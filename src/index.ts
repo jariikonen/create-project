@@ -115,13 +115,7 @@ const OPTION_HUSKY: TemplateOption = {
 const OPTION_GITHUB_ACTIONS: TemplateOption = {
   name: 'githubActions',
   label: 'GitHub Actions',
-  hint: 'Configure a basic set of GitHub Actions.',
-};
-
-const OPTION_RELEASE_PLEASE: TemplateOption = {
-  name: 'releasePlease',
-  label: 'Release Please',
-  hint: 'GHA workflow for creating new releases based on conventional commit messages.',
+  hint: 'Add GH Actions workflows. Select which ones to add in the next step.',
 };
 
 /** The options common to all (or the most) of the templates. */
@@ -133,7 +127,6 @@ const COMMON_OPTIONS = [
   OPTION_GITHOOKS,
   OPTION_HUSKY,
   OPTION_GITHUB_ACTIONS,
-  OPTION_RELEASE_PLEASE,
 ];
 
 /** The recommended options from the COMMON_OPTIONS. */
@@ -148,6 +141,27 @@ const OPTION_REACT_TESTING_LIBRARY: TemplateOption = {
 
 /** Options specific to React. */
 const REACT_OPTIONS = [OPTION_REACT_TESTING_LIBRARY];
+
+const OPTION_CI: TemplateOption = {
+  name: 'ci',
+  label: 'CI Workflow',
+  hint: 'Runs tests and other code quality tools.',
+};
+
+const OPTION_PUBLISH_NPM: TemplateOption = {
+  name: 'publishNpm',
+  label: 'Publish package to npm registry',
+  hint: 'Publishes the package to npm after a new release has been created.',
+};
+
+const OPTION_RELEASE_PLEASE: TemplateOption = {
+  name: 'releasePlease',
+  label: 'Release Please',
+  hint: 'Crreates new releases automatically based on conventional commit messages.',
+};
+
+/** GH Actions Workflow options. */
+const WORKFLOW_OPTIONS = [OPTION_CI, OPTION_PUBLISH_NPM, OPTION_RELEASE_PLEASE];
 
 /**
  * Template objects containing both template configuration data and data used
@@ -437,16 +451,36 @@ async function main() {
   options = sortOptions(optionChoices, options);
   options = [...options, ...(template.projectOptions ?? [])];
 
-  // 9. prompt whether the dependencies should be installed
+  // 9. prompt for GH Actions workflows if githubActions was selected
+  let workflows: string[] = [];
+  if (options.includes('githubActions')) {
+    const optionChoices = WORKFLOW_OPTIONS.map((o) => {
+      return {
+        value: o.name,
+        label: o.label,
+        hint: o.hint,
+      };
+    });
+    workflows = await prompt<
+      MultiSelectOptions<string>,
+      MultiSelectReturn<string>
+    >(multiselect, {
+      message: 'Select GH Actions workflows to add:',
+      options: optionChoices,
+    });
+  }
+
+  // 10. prompt whether the dependencies should be installed
   const installDeps = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
     message: 'Install dependencies?',
     active: 'Yes',
     inactive: 'No',
   });
 
-  // 10. prompt for package manager (if dependencies are installed)
+  // 11. prompt for package manager (if workflows are added or dependencies are
+  // installed)
   let packageManager = 'npm';
-  if (installDeps) {
+  if (workflows.length > 0 || installDeps) {
     packageManager = await prompt<SelectOptions<string>, SelectReturn<string>>(
       select,
       {
@@ -465,7 +499,7 @@ async function main() {
     );
   }
 
-  // 11. scaffold the project
+  // 12. scaffold the project
   const s = spinner();
 
   const templateDirPath = path.resolve(
@@ -494,16 +528,16 @@ async function main() {
     configFileTemplateDirPath,
     projectName,
     options,
+    workflows,
     template.projectDependencyOverrides,
     packageManager,
-    installDeps,
     s
   );
   s.stop(`Project has been tailored to match your settings.`);
 
-  // 12. output next steps
+  // 13. install dependencies if requested
 
-  // outro
+  // 14. output next steps
   outro("You're all set!");
 }
 

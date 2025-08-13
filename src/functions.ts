@@ -24,6 +24,7 @@ import { copyDir, getAdditionalArguments, getScriptName } from '@shared/common';
 import { configureReadme } from './configurationScripts/configureReadme';
 import { configureHusky } from './configurationScripts/configureHusky';
 import { configureNativeGitHooks } from './configurationScripts/configureNativeGitHooks';
+import { configureGitHubActions } from './configurationScripts/configureGitHubActions';
 
 const TEMPLATE_FILE_CONFIG_FILE_NAME = 'template.config.json';
 const errorColor = red;
@@ -564,6 +565,7 @@ async function configureOptions(
   templateDirPath: string,
   configFileTemplateDirPath: string,
   options: string[],
+  workflows: string[],
   templateFileConfigJson: Record<string, string | TemplateConfig>,
   packageManager: string,
   s: SpinnerObject
@@ -622,9 +624,11 @@ async function configureOptions(
         s
       );
     } else if (option === 'githubActions') {
-      s.stop(
-        `configureOptions(): Configuration for "${option}" is not yet implemented.`,
-        1
+      configureGitHubActions(
+        targetDirPath,
+        configFileTemplateDirPath,
+        workflows,
+        packageManager
       );
     } else if (option === 'releasePlease') {
       s.stop(
@@ -725,9 +729,9 @@ export async function updateCreatedProject(
   configFileTemplateDirPath: string,
   projectName: string,
   options: string[],
+  workflows: string[],
   projectDependencyOverrides: DependencyOverrides | undefined,
   packageManager: string,
-  installDeps: boolean,
   s: SpinnerObject
 ) {
   // read template package.json from the target directory
@@ -790,6 +794,7 @@ export async function updateCreatedProject(
     templateDirPath,
     configFileTemplateDirPath,
     options,
+    workflows,
     templateFileConfigJson,
     packageManager,
     s
@@ -801,8 +806,7 @@ export async function updateCreatedProject(
     configFileTemplateDirPath,
     templateFileConfigJson,
     options,
+    workflows,
     s
   );
-
-  // install dependencies if requested
 }

@@ -33,10 +33,6 @@ No options were selected when initializing this project.
 
 {{> huskyPartial}}
 {{/if}}
-{{#if optionData.githubActions}}
-
-{{> githubActionsPartial}}
-{{/if}}
 {{#if optionData.releasePlease}}
 
 {{> releasePleasePartial}}
@@ -44,4 +40,8 @@ No options were selected when initializing this project.
 {{#if optionData.reactTestingLibrary}}
 
 {{> reactTestingLibraryPartial}}
+{{/if}}
+{{#if includeWorkflows}}
+
+{{> githubActionsPartial}}
 {{/if}}

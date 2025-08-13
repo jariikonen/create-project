@@ -1,0 +1,15 @@
+## {{optionData.githubActions.display}}
+
+There is a .github/workflows/ directory in the project, containing the workflows you selected.
+{{#if workflowsToInclude.ci}}
+
+{{> ciPartial}}
+{{/if}}
+{{#if workflowsToInclude.releasePlease}}
+
+{{> releasePleasePartial}}
+{{/if}}
+{{#if workflowsToInclude.publishNpm}}
+
+{{> publishNpmPartial}}
+{{/if}}

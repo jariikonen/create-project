@@ -1,0 +1,20 @@
+- uses: actions/setup-node@v4
+  with:
+    node-version: {{ nodeVersion }}
+    {{#if registryUrl}}
+    registry-url: '{{ registryUrl }}'
+    {{/if}}
+    {{#if (eq packageManager "npm")}}
+    cache: 'npm'
+    {{else if (eq packageManager "pnpm")}}
+    cache: 'pnpm'
+    {{/if}}
+
+- name: Install dependencies
+  run: |
+    {{#if (eq packageManager "npm")}}
+    npm ci
+    {{else if (eq packageManager "pnpm")}}
+    corepack enable
+    pnpm install --frozen-lockfile
+    {{/if}}
