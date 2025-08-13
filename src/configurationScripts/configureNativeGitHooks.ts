@@ -42,7 +42,9 @@ export function configureNativeGitHooks(
   // executable
   const hooksDirPath = path.resolve(targetDirPath, 'git-hooks');
   const filePath = path.resolve(hooksDirPath, CONFIG_FILE_NAME);
-  fs.mkdirSync(hooksDirPath);
+  if (!fs.existsSync(hooksDirPath)) {
+    fs.mkdirSync(hooksDirPath);
+  }
   fs.writeFileSync(filePath, output);
   fs.chmodSync(filePath, '755');
 }
