@@ -4,6 +4,10 @@ import Handlebars from 'handlebars';
 import { CommentArray, parse, stringify } from 'comment-json';
 import { SpinnerObject, TemplateConfig } from '@shared/types';
 
+/**
+ * Returns the template name from an argument that is either string or a
+ * TemplateConfig Record (found, e.g., on template.config.json).
+ */
 export function getTemplateName(config: string | TemplateConfig) {
   if (typeof config === 'object') {
     return config.template;
@@ -11,6 +15,10 @@ export function getTemplateName(config: string | TemplateConfig) {
   return config;
 }
 
+/**
+ * Returns the script name from an argument that is either string or a
+ * TemplateConfig Record (found, e.g., on template.config.json).
+ */
 export function getScriptName(config: string | TemplateConfig) {
   if (typeof config === 'object') {
     return config.script;
@@ -18,6 +26,11 @@ export function getScriptName(config: string | TemplateConfig) {
   return null;
 }
 
+/**
+ * Returns the additional arguments (under `other`) from an argument that is
+ * either string or a TemplateConfig Record (found, e.g., on
+ * template.config.json).
+ */
 export function getAdditionalArguments(config: string | TemplateConfig) {
   if (typeof config === 'object') {
     return config.other;
@@ -87,6 +100,17 @@ export function copy(src: string, dest: string) {
   }
 }
 
+/**
+ * Copies a file from `srcDirPath` to `targetDirPath`.
+ *
+ * Filenames `srcFilename` and `targetFilename` are relative to `srcDirPath`
+ * and `targetDirPath` respectively. If `targetFilename` is not used,
+ * `srcFilename` is used in the both ends.
+ * @param srcFilename Name of the file to copy.
+ * @param srcDirPath Path of the source directory.
+ * @param targetDirPath Path of the target directory.
+ * @param targetFilename Name of the file in the target location.
+ */
 export function copyFile(
   srcFilename: string,
   srcDirPath: string,
@@ -123,14 +147,27 @@ export function includeFileInTsconfig(filename: string, tsconfigPath: string) {
   );
 }
 
-export function addGlobalsToTsconfig(
+/**
+ * Adds "vitest/globals" to the types property of tsconfig.
+ * @param targetDirPath Path of the directory where the tsconfig file is
+ *    located.
+ * @param tsconfigFilename Name of the tsconfig file.
+ */
+export function addVitestGlobalsToTsconfig(
   targetDirPath: string,
-  globalsTsconfig: string
+  tsconfigFilename: string
 ) {
-  const tsconfigPath = path.join(targetDirPath, globalsTsconfig);
+  const tsconfigPath = path.join(targetDirPath, tsconfigFilename);
   addTypesToTsconfig('vitest/globals', tsconfigPath, 'Vitest');
 }
 
+/**
+ * Adds a string to the types property of a tsconfig file.
+ * @param typesDescriptor String to be added to the types property.
+ * @param tsconfigPath Path to the tsconfig file.
+ * @param comment An optional comment added for the types property using
+ *    comment-json.
+ */
 export function addTypesToTsconfig(
   typesDescriptor: string,
   tsconfigPath: string,
@@ -172,6 +209,16 @@ export function addTypesToTsconfig(
   );
 }
 
+/**
+ * Registers Handlebars template partials.
+ *
+ * In the partials objects `filename` defines the name of the file from which
+ * the partial is read, and `name` defines the name used for the partial on the
+ * template.
+ * @param partials An array of objects containing the partials data.
+ * @param partialDirPath Path to the directory where the partials files are
+ *    located.
+ */
 export function registerPartials(
   partials: { filename: string; name: string }[],
   partialDirPath: string
@@ -185,6 +232,10 @@ export function registerPartials(
   });
 }
 
+/**
+ * Converts a camel-case string (e.g., camelCase) to a kebab-case string
+ * (e.g., kebab-case).
+ */
 export function camelToKebab(str: string) {
   return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }

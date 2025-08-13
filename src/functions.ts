@@ -58,12 +58,24 @@ export function sortOptions(choices: Option<string>[], selected: string[]) {
     .filter((value) => selected.includes(value));
 }
 
+/**
+ * Returns true if the given path leads to the root directory.
+ */
 function isRootDir(inputPath: string) {
   const normalized = path.resolve(inputPath);
   const { root } = path.parse(normalized);
   return normalized === root;
 }
 
+/**
+ * Returns boolean indicating whether the given path is a valid path on the
+ * host operating system.
+ *
+ * Notice! Although ASCII control characters and filenames ending in a space or
+ * a period are allowed in POSIX, they are treated as invalid here.
+ * @param filePath Path to check.
+ * @returns True, if the path is valid, false otherwise.
+ */
 function isValidPath(filePath: string) {
   if (typeof filePath !== 'string' || filePath.length === 0) return false;
 

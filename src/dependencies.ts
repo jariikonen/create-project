@@ -1,5 +1,8 @@
 import { DefaultDependencies } from '@shared/types';
 
+/**
+ * Contains the latest version numbers for the dependencies.
+ */
 export const LATEST_DEPENDENCY_VERSIONS: Record<string, string> = {
   '@eslint/js': '^9.30.1',
   '@testing-library/jest-dom': '^6.6.3',
@@ -34,6 +37,12 @@ export const LATEST_DEPENDENCY_VERSIONS: Record<string, string> = {
   vitest: '^3.2.4',
 };
 
+/**
+ * Contains the default dependency packages for the options.
+ *
+ * The property `withOption` defines which packages are used when the option
+ * in the key is also selected.
+ */
 export const DEFAULT_DEPENDENCIES: Record<string, DefaultDependencies> = {
   eslint: {
     devDependencies: ['@eslint/js', 'eslint', 'globals', 'typescript-eslint'],

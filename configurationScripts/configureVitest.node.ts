@@ -1,5 +1,5 @@
 import {
-  addGlobalsToTsconfig,
+  addVitestGlobalsToTsconfig,
   copyFile,
   includeFileInTsconfig,
 } from '@shared/common';
@@ -30,7 +30,7 @@ export function configureVitest(
     );
     return;
   }
-  addGlobalsToTsconfig(targetDirPath, globalsTsconfig);
+  addVitestGlobalsToTsconfig(targetDirPath, globalsTsconfig);
   copyFile(
     'vitest.config.node.ts',
     configFileTemplateDirPath,

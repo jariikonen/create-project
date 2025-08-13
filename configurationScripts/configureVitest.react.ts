@@ -5,7 +5,10 @@ import {
   ConfigureScriptProps,
   SpinnerObject,
 } from '@shared/types';
-import { addGlobalsToTsconfig, includeFileInTsconfig } from '@shared/common';
+import {
+  addVitestGlobalsToTsconfig,
+  includeFileInTsconfig,
+} from '@shared/common';
 
 function copyTestSetup(
   targetDirPath: string,
@@ -46,7 +49,7 @@ export function configureVitest(
     );
     return;
   }
-  addGlobalsToTsconfig(targetDirPath, globalsTsconfig);
+  addVitestGlobalsToTsconfig(targetDirPath, globalsTsconfig);
 
   if (options.includes('reactTestingLibrary')) {
     const testSetupTsconfig = additionalArgs?.testSetupTsconfig;
