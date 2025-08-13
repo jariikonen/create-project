@@ -64,9 +64,13 @@ Options:
   --overwrite                overwrite previous project
 
 Available templates:
-${green       ('node           (node module)')}
-${cyan        ('react          (browser)')}
-${cyan        ('react-lib      (browser)')}`;
+${green(
+  'node         Node.js project template (Node.js + TypeScript + tsdown)'
+)}
+${cyan('react        React project template (React + TypeScript + Vite)')}
+${cyan(
+  'react-lib    React component library template (React + TypeScript + Vite)'
+)}`;
 
 type ConfirmReturn = boolean | symbol;
 type SelectReturn<T> = symbol | T;
