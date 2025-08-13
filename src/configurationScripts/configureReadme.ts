@@ -73,7 +73,6 @@ export function configureReadme(
       { filename: 'githooks.hbs', name: 'githooksPartial' },
       { filename: 'husky.hbs', name: 'huskyPartial' },
       { filename: 'githubActions.hbs', name: 'githubActionsPartial' },
-      { filename: 'releasePlease.hbs', name: 'releasePleasePartial' },
       {
         filename: 'reactTestingLibrary.hbs',
         name: 'reactTestingLibraryPartial',
