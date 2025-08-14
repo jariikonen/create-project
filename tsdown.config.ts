@@ -1,5 +1,6 @@
 import { promisify } from 'node:util';
-import { exec as execCallback, ExecException } from 'node:child_process';
+import { exec as execCallback } from 'node:child_process';
+import type { ExecException } from 'node:child_process';
 import { defineConfig } from 'tsdown';
 
 const exec = promisify(execCallback);

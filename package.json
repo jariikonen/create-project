@@ -24,7 +24,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsdown --sourcemap --watch",
-    "build": "tsdown",
+    "build": "tsdown --sourcemap",
     "build:scripts": "tsdown --config tsdown.config.scripts.ts",
     "typecheck": "tsc",
     "cleanup": "rm -rf ./dist && rm -rf ./coverage && rm -rf ./node_modules"

@@ -1,6 +1,7 @@
 import 'source-map-support/register';
 import { promisify } from 'node:util';
-import { exec as execCallback, ExecException } from 'node:child_process';
+import { exec as execCallback } from 'node:child_process';
+import type { ExecException } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import fs from 'node:fs';
 import path from 'node:path';
