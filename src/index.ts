@@ -1,6 +1,6 @@
 import 'source-map-support/register';
 import { promisify } from 'node:util';
-import { exec as execCallback } from 'node:child_process';
+import { exec as execCallback, ExecException } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -547,17 +547,22 @@ async function main() {
   if (installDeps) {
     s.start(`Installing dependencies using ${packageManager}...`);
     const command = `${packageManager} install`;
-    const { stdout, stderr } = await exec(command, { cwd: targetDirPath });
-    if (stderr) {
-      s.stop('Dependency installation failed.');
-      s.stop(`stderr: ${stderr}`, 1);
-    } else {
+    try {
+      const { stdout } = await exec(command, { cwd: targetDirPath });
       s.stop('Dependencies installed succesfully.');
+      if (stdout) {
+        log.message(stdout);
+      }
+    } catch (error) {
+      const e = error as ExecException & { stdout: string; stderr: string };
+      s.stop('Dependency installation returned with an error.');
+      if (e.stdout) {
+        log.message(e.stdout);
+      }
+      if (e.stderr) {
+        log.error(`stderr: ${e.stderr}`);
+      }
     }
-    if (stdout) {
-      s.message(`stdout: ${stdout}`);
-    }
-    log.step(stdout);
   }
 
   // 14. output next steps
