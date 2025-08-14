@@ -3,6 +3,7 @@
     "src",
     "shared",
     "tsdown.config.ts",
+    "tsdown.config.scripts.ts",
     "vitest.config.ts",
     "configFileTemplates",
     "configurationScripts"

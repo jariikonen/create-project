@@ -2,11 +2,30 @@
   "name": "create-project",
   "private": true,
   "version": "0.0.0",
+  "description": "Easily extensible project scaffolding application.",
+  "author": "Jari Ikonen",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jariikonen/create-project.git"
+  },
+  "bin": {
+    "create-project": "index.js",
+    "cpa": "index.js"
+  },
+  "files": [
+    "configFileTemplates",
+    "dist",
+    "index.js",
+    "template-node",
+    "template-react",
+    "template-react-lib"
+  ],
   "type": "module",
   "scripts": {
     "dev": "tsdown --sourcemap --watch",
     "build": "tsdown",
-    "build:scripts": "tsc -p tsconfig.scripts.json && tsc-alias -p tsconfig.scripts.json",
+    "build:scripts": "tsdown --config tsdown.config.scripts.ts",
     "typecheck": "tsc",
     "cleanup": "rm -rf ./dist && rm -rf ./coverage && rm -rf ./node_modules"
   },
@@ -21,8 +40,8 @@
     "handlebars": "^4.7.8",
     "mri": "^1.2.0",
     "picocolors": "^1.1.1",
+    "rollup-plugin-tsconfig-paths": "^1.5.2",
     "source-map-support": "^0.5.21",
-    "tsc-alias": "^1.8.16",
     "tsdown": "^0.12.9",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.24.1",
