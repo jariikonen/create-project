@@ -1,4 +1,10 @@
 import 'source-map-support/register';
+import { promisify } from 'node:util';
+import { exec as execCallback } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   intro,
   outro,
@@ -15,10 +21,6 @@ import {
   TextOptions,
 } from '@clack/prompts';
 import color from 'picocolors';
-import { readFile } from 'node:fs/promises';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import mri from 'mri';
 import {
   copyTemplate,
@@ -525,7 +527,7 @@ async function main() {
   copyTemplate(templateDirPath, targetDirPath, s);
   s.stop(`Copied template "${template.label}" to the project directory.`);
 
-  s.start(`Tailor the project to match the requested settings...`);
+  s.start('Tailoring the project to match the requested settings...');
   await updateCreatedProject(
     targetDirPath,
     templateDirPath,
@@ -537,9 +539,25 @@ async function main() {
     packageManager,
     s
   );
-  s.stop(`Project has been tailored to match your settings.`);
+  s.stop('Project has been tailored to match your settings.');
 
   // 13. install dependencies if requested
+  const exec = promisify(execCallback);
+  if (installDeps) {
+    s.start(`Installing dependencies using ${packageManager}...`);
+    const command = `${packageManager} install`;
+    const { stdout, stderr } = await exec(command, { cwd: targetDirPath });
+    if (stderr) {
+      s.stop('Dependency installation failed.');
+      s.stop(`stderr: ${stderr}`, 1);
+    } else {
+      s.stop('Dependencies installed succesfully.');
+    }
+    if (stdout) {
+      s.message(`stdout: ${stdout}`);
+    }
+    log.step(stdout);
+  }
 
   // 14. output next steps
   outro("You're all set!");

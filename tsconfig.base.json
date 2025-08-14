@@ -24,8 +24,8 @@
     "inlineSources": true,
     "inlineSourceMap": false,
 
-    /* Vitest */
-    "types": ["vitest/globals"]
+    /* Types */
+    "types": ["node", "vitest/globals"]
   },
   "tsc-alias": {
     "resolveFullPaths": true
