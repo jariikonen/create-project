@@ -37,7 +37,7 @@ import {
   updateCreatedProject,
   sortOptions,
 } from './functions';
-import { Template, TemplateOption } from '@shared/types';
+import { SpinnerObject, Template, TemplateOption } from '@shared/types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -506,7 +506,26 @@ async function main() {
     );
   }
 
-  // 12. scaffold the project
+  // 12. prompt whether the git should be initialized
+  let initGit = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
+    message: 'Initialize Git?',
+    active: 'Yes',
+    inactive: 'No',
+  });
+
+  const gitIsInitialized = fs.existsSync(path.join(targetDirPath, '.git'));
+
+  if (initGit && gitIsInitialized) {
+    initGit = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
+      message: warning(
+        'Git has already been initialized. Are you sure you want to re-initialize it?'
+      ),
+      active: 'Yes',
+      inactive: 'No',
+    });
+  }
+
+  // 13. scaffold the project
   const s = spinner();
 
   const templateDirPath = path.resolve(
@@ -542,37 +561,102 @@ async function main() {
   );
   s.stop('Project has been tailored to match your settings.');
 
-  // 13. install dependencies if requested
+  // 13. initialize Git if requested
   const exec = promisify(execCallback);
-  if (installDeps) {
-    s.start(`Installing dependencies using ${packageManager}...`);
-    const command = `${packageManager} install`;
+  if (initGit) {
     try {
-      const { stdout } = await exec(command, { cwd: targetDirPath });
-      s.stop('Dependencies installed succesfully.');
+      const { stdout } = await exec('git init', { cwd: targetDirPath });
+      log.step('Git initialized successfully.');
       if (stdout) {
         log.message(stdout);
       }
     } catch (error) {
       const e = error as ExecException & { stdout: string; stderr: string };
-      s.stop('Dependency installation returned with an error.');
+      log.error('Git initialization failed.');
       if (e.stdout) {
         log.message(e.stdout);
       }
       if (e.stderr) {
-        log.error(`stderr: ${e.stderr}`);
+        log.message(e.stderr);
       }
     }
   }
 
-  // 14. output next steps
+  // 14. install dependencies if requested
+  let gitNeedsInitializing = options.includes('husky') && !initGit;
+
+  function handleSuccess(s: SpinnerObject) {
+    s.stop('Dependencies installed succesfully');
+  }
+
+  function handleGitNotInitialized(
+    s: SpinnerObject,
+    e?: ExecException & { stdout: string; stderr: string }
+  ) {
+    handleSuccess(s);
+    gitNeedsInitializing = true;
+    log.error(
+      `Could not prepare ${
+        e ? 'Git hooks' : 'husky'
+      }. You need to initialize Git and run "prepare".`
+    );
+    if (e && e.stdout) {
+      log.message(e.stdout);
+    }
+    if (e && e.stderr) {
+      log.message(e.stderr);
+    }
+  }
+
+  function handleError(
+    s: SpinnerObject,
+    e: ExecException & { stdout: string; stderr: string }
+  ) {
+    s.stop('Dependency installation returned with an error.', 1);
+    if (e.stdout) {
+      log.message(e.stdout);
+    }
+    if (e.stderr) {
+      log.message(`stderr: ${e.stderr}`);
+    }
+  }
+
+  if (installDeps) {
+    s.start(`Installing dependencies using ${packageManager}...`);
+    const command = `${packageManager} install`;
+    try {
+      const { stdout } = await exec(command, { cwd: targetDirPath });
+      if (stdout.includes(".git can't be found")) {
+        handleGitNotInitialized(s);
+      } else {
+        handleSuccess(s);
+        if (stdout) {
+          log.message(stdout);
+        }
+      }
+    } catch (error) {
+      const e = error as ExecException & { stdout: string; stderr: string };
+      if (
+        e.stderr.includes('fatal: not in a git directory') &&
+        e.stderr.length < 31
+      ) {
+        handleGitNotInitialized(s, e);
+      } else {
+        handleError(s, e);
+      }
+    }
+  }
+
+  // 15. output next steps
   const projectDirPath = path.relative(process.cwd(), targetDirPath);
   const marginLength =
     projectDirPath.length < 12 ? 4 + (12 - projectDirPath.length) : 4;
   const margin = ' '.repeat(marginLength);
   const nextSteps = `    cd ${projectDirPath}${margin}\n    ${
-    installDeps ? '' : `${packageManager} install\n    `
-  }${packageManager} dev`;
+    gitNeedsInitializing ? `git init\n    ` : ''
+  }${installDeps ? '' : `${packageManager} install\n    `}${
+    gitNeedsInitializing ? `${packageManager} run prepare\n    ` : ''
+  }${packageManager} run dev`;
   note(nextSteps, 'Next steps:');
   outro("You're all set!");
 }
