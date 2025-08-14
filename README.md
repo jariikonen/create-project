@@ -1,6 +1,6 @@
 # create-project
 
-An easily extensible project scaffolding application.
+Easily extensible project scaffolding application.
 
 ## Usage
 
