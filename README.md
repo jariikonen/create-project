@@ -4,6 +4,12 @@ Easily extensible project scaffolding application.
 
 ## Usage
 
+Run using `npm create` (or `npm init`; see [npm-init](https://docs.npmjs.com/cli/v11/commands/npm-init)).
+
+```
+npm create @jariikonen/project
+```
+
 ```
 Usage: create-project [OPTION]... [DIRECTORY]
 
