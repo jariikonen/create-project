@@ -19,6 +19,7 @@ import {
   SelectOptions,
   MultiSelectOptions,
   TextOptions,
+  note,
 } from '@clack/prompts';
 import color from 'picocolors';
 import mri from 'mri';
@@ -560,6 +561,14 @@ async function main() {
   }
 
   // 14. output next steps
+  const projectDirPath = path.relative(process.cwd(), targetDirPath);
+  const marginLength =
+    projectDirPath.length < 12 ? 4 + (12 - projectDirPath.length) : 4;
+  const margin = ' '.repeat(marginLength);
+  const nextSteps = `    cd ${projectDirPath}${margin}\n    ${
+    installDeps ? '' : `${packageManager} install\n    `
+  }${packageManager} dev`;
+  note(nextSteps, 'Next steps:');
   outro("You're all set!");
 }
 
