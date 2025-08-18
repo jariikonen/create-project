@@ -624,6 +624,12 @@ async function main() {
 
   if (installDeps) {
     s.start(`Installing dependencies using ${packageManager}...`);
+
+    // remove node_modules (user may have ignored old files)
+    const nodeModulesPath = path.join(targetDirPath, 'node_modules');
+    fs.rmSync(nodeModulesPath, { recursive: true, force: true });
+
+    // install dependencies
     const command = `${packageManager} install`;
     try {
       const { stdout } = await exec(command, { cwd: targetDirPath });
