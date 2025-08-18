@@ -18,11 +18,8 @@
     "dist",
     "index.js",
     "template-node",
-    "template-node/.gitignore",
     "template-react",
-    "template-react/.gitignore",
-    "template-react-lib",
-    "template-react-lib/.gitignore"
+    "template-react-lib"
   ],
   "type": "module",
   "scripts": {

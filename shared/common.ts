@@ -77,12 +77,15 @@ export function getConfigFileTemplateContent(
 
 /**
  * Copies the `srcDir` to `destDir` recursively.
+ *
+ * Notice! Source filename `_gitignore` gets name `.gitignore` in the destDir.
  */
 export function copyDir(srcDir: string, destDir: string) {
   fs.mkdirSync(destDir, { recursive: true });
   for (const file of fs.readdirSync(srcDir)) {
+    const destFilename = file === '_gitignore' ? '.gitignore' : file;
     const srcFile = path.resolve(srcDir, file);
-    const destFile = path.resolve(destDir, file);
+    const destFile = path.resolve(destDir, destFilename);
     copy(srcFile, destFile);
   }
 }
