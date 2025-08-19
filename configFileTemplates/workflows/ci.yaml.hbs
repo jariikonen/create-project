@@ -2,21 +2,18 @@ name: CI
 
 on:
   push:
-    branches-ignore:
-      - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  ci:
+    if: github.event_name == 'push' || github.event.pull_request != null
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         node-version: [20.x, 22.x]
     steps:
       - uses: actions/checkout@v4
+
       {{> installDepsPartial nodeVersion="${{ matrix.node-version }}" }}
       
       - name: Lint
@@ -24,15 +21,15 @@ jobs:
           {{#if (eq packageManager "npm")}}
           npm run lint --if-present
           {{else if (eq packageManager "pnpm")}}
-          pnpm lint --if-present
+          pnpm run --if-present lint
           {{/if}}
 
-      - name: Run tests
+      - name: Test
         run: |
           {{#if (eq packageManager "npm")}}
-          npm test --if-present
+          npm run test --if-present
           {{else if (eq packageManager "pnpm")}}
-          pnpm test --if-present
+          pnpm run --if-present test
           {{/if}}
 
       - name: Build
@@ -40,5 +37,5 @@ jobs:
           {{#if (eq packageManager "npm")}}
           npm run build --if-present
           {{else if (eq packageManager "pnpm")}}
-          pnpm build --if-present
+          pnpm run --if-present build
           {{/if}}

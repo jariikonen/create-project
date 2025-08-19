@@ -7,10 +7,19 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+
       {{> installDepsPartial nodeVersion="22.x" registryUrl="https://registry.npmjs.org" }}
+
+      - name: Build
+        run: |
+          {{#if (eq packageManager "npm")}}
+          npm run build
+          {{else if (eq packageManager "pnpm")}}
+          pnpm run build
+          {{/if}}
       
       - name: Publish package
         env:

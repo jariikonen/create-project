@@ -6,6 +6,14 @@ which creates release pull requests automatically based on the [conventional
 commit messages](https://www.conventionalcommits.org/). It runs on a push to
 the main branch and it can also be dispatched manually.
 
+The easiest way to start the versioning from a specific version number is to
+create an empty commit with `Release-As: <VERSION>` in the message. For
+example, like this:
+
+```
+git commit --allow-empty -m 'chore: release 0.1.0' -m 'Release-As: 0.1.0'
+```
+
 **Notice!** You need to create a Personal Access Token that has read and write
-access to code and pull requests and set it as action secret named
+access to code (contents) and pull requests and set it as action secret named
 RELEASE_PLEASE_TOKEN in the repository.
