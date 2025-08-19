@@ -33,5 +33,5 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          pnpm publish --no-git-checks
+          pnpm publish --no-git-checks --access public
           
