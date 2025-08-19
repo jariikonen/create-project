@@ -37,8 +37,16 @@ import {
   prompt,
   updateCreatedProject,
   sortOptions,
+  getDirectoryHandlingOptions,
+  confirmTargetDirContentRemoval,
 } from './functions';
 import { SpinnerObject, Template, TemplateOption } from '@shared/types';
+import {
+  ConfirmReturn,
+  MultiSelectReturn,
+  SelectReturn,
+  TextReturn,
+} from './types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -75,11 +83,6 @@ ${cyan('react        React project template (React + TypeScript + Vite)')}
 ${cyan(
   'react-lib    React component library template (React + TypeScript + Vite)'
 )}`;
-
-type ConfirmReturn = boolean | symbol;
-type SelectReturn<T> = symbol | T;
-type MultiSelectReturn<T> = symbol | T[];
-type TextReturn = string | symbol;
 
 const DEFAULT_PACKAGE_NAME = 'my-project';
 const DEFAULT_PATH = `.${path.sep}${DEFAULT_PACKAGE_NAME}`;
@@ -313,9 +316,10 @@ async function main() {
 
   // 4. handle directory if exists and not empty
   const cwd = process.cwd();
+  const directoryHandlingOptions = getDirectoryHandlingOptions(targetDirPath);
   if (fs.existsSync(targetDirPath) && !isEmpty(targetDirPath)) {
     const overwrite = argv.overwrite
-      ? 'yes'
+      ? 'removeExcludingGit'
       : await prompt(select, {
           message: warning(
             (targetDirPath === cwd
@@ -323,41 +327,38 @@ async function main() {
               : `Target directory "${targetDirPath}"`) +
               ` is not empty. Please choose how to proceed:`
           ),
-          options: [
-            {
-              label: 'Cancel operation',
-              value: 'no',
-            },
-            {
-              label: 'Remove existing files and continue',
-              value: 'yes',
-            },
-            {
-              label: 'Ignore files and continue',
-              value: 'ignore',
-            },
-          ],
+          options: directoryHandlingOptions,
         });
 
     switch (overwrite) {
-      case 'yes': {
-        const confirmDelete = await prompt<ConfirmOptions, ConfirmReturn>(
-          confirm,
-          {
-            message: warning(
-              `Are you sure you want to delete all files in "${targetDirPath}"?`
-            ),
-          }
+      case 'remove': {
+        await confirmTargetDirContentRemoval(
+          warning(
+            `This will delete everything in "${targetDirPath}". Continue?`
+          ),
+          () => clearDir(targetDir, false)
         );
-        if (confirmDelete) {
-          clearDir(targetDir);
-        } else {
-          cancel('Operation cancelled.');
-          process.exit(1);
-        }
         break;
       }
-      case 'no':
+      case 'removeExcludingGit': {
+        await confirmTargetDirContentRemoval(
+          warning(
+            `This will delete everything in "${targetDirPath}" (excluding .git). Continue?`
+          ),
+          () => clearDir(targetDir, false)
+        );
+        break;
+      }
+      case 'removeIncludingGit': {
+        await confirmTargetDirContentRemoval(
+          warning(
+            `This will delete everything in "${targetDirPath}" including the version history". Continue?`
+          ),
+          () => clearDir(targetDir, true)
+        );
+        break;
+      }
+      case 'cancel':
         cancel('Operation cancelled.');
         process.exit(1);
     }

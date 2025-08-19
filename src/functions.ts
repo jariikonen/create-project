@@ -1,8 +1,16 @@
 /* eslint-disable no-control-regex */
-import { cancel, isCancel, log, Option, outro } from '@clack/prompts';
+import {
+  cancel,
+  confirm,
+  ConfirmOptions,
+  isCancel,
+  log,
+  Option,
+  outro,
+} from '@clack/prompts';
 import path from 'node:path';
 import fs from 'node:fs';
-import { red } from 'picocolors';
+import { red, yellow } from 'picocolors';
 import {
   Package,
   DependencyOverrides,
@@ -25,9 +33,15 @@ import { configureReadme } from './configurationScripts/configureReadme';
 import { configureHusky } from './configurationScripts/configureHusky';
 import { configureNativeGitHooks } from './configurationScripts/configureNativeGitHooks';
 import { configureGitHubActions } from './configurationScripts/configureGitHubActions';
+import { ConfirmReturn } from './types';
 
 const TEMPLATE_FILE_CONFIG_FILE_NAME = 'template.config.json';
-const errorColor = red;
+
+/** A coloring function to be used for coloring errors. */
+export const errorColor = red;
+
+/** A coloring function to be used for coloring warnings. */
+export const warningColor = yellow;
 
 /**
  * A wrapper for clack/prompts that handles prompt cancellation in a
@@ -217,13 +231,14 @@ export function isEmpty(path: string) {
 /**
  * Clears the directory of all of its contents (except .git/).
  * @param dir Path to the directory as a string.
+ * @param removeGit If true, the .git directory is also removed.
  */
-export function clearDir(dir: string) {
+export function clearDir(dir: string, removeGit?: boolean) {
   if (!fs.existsSync(dir)) {
     return;
   }
   for (const file of fs.readdirSync(dir)) {
-    if (file === '.git') {
+    if (file === '.git' && !removeGit) {
       continue;
     }
     fs.rmSync(path.resolve(dir, file), { recursive: true, force: true });
@@ -821,4 +836,72 @@ export async function updateCreatedProject(
     workflows,
     s
   );
+}
+
+/**
+ * Returns options for the prompt asking how to deal with the existing files.
+ *
+ * Checks whether the .git directory exists and returns different options based
+ * on the result.
+ * @param targetDirPath Path to the target directory.
+ * @returns Array of options that can be passed to a select prompt.
+ */
+export function getDirectoryHandlingOptions(targetDirPath: string) {
+  const gitPath = path.join(targetDirPath, '.git');
+  if (fs.existsSync(gitPath)) {
+    return [
+      {
+        label: 'Cancel operation',
+        value: 'cancel',
+      },
+      {
+        label: 'Remove existing files (excluding .git) and continue',
+        value: 'removeExcludingGit',
+      },
+      {
+        label: 'Remove existing files (including .git) and continue',
+        value: 'removeIncludingGit',
+      },
+      {
+        label: 'Ignore files and continue',
+        value: 'ignore',
+      },
+    ];
+  }
+  return [
+    {
+      label: 'Cancel operation',
+      value: 'cancel',
+    },
+    {
+      label: 'Remove existing files and continue',
+      value: 'remove',
+    },
+    {
+      label: 'Ignore files and continue',
+      value: 'ignore',
+    },
+  ];
+}
+
+/**
+ * Presents a confirmation prompt to the user with the `message` and runs the
+ * `removeFn` if the user confirms. Otherwise runs @clack/prompts `cancel` and
+ * exits the process with return value 1.
+ * @param message Message displayed to the user.
+ * @param removeFn Function executed if the user confirms.
+ */
+export async function confirmTargetDirContentRemoval(
+  message: string,
+  removeFn: () => void
+) {
+  const confirmDelete = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
+    message,
+  });
+  if (confirmDelete) {
+    removeFn();
+  } else {
+    cancel('Operation cancelled.');
+    process.exit(1);
+  }
 }
