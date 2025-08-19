@@ -452,15 +452,7 @@ async function main() {
     }
   }
 
-  // 8. sort options
-  // clack/prompts MultiSelect returns the selected options in the order they
-  // are selected, but this would mess the order of the options in README.md,
-  // so we sort the options to match the order they were specified in
-  // optionChoices
-  options = sortOptions(optionChoices, options);
-  options = [...options, ...(template.projectOptions ?? [])];
-
-  // 9. prompt for GH Actions workflows if githubActions was selected
+  // 8. prompt for GH Actions workflows if githubActions was selected
   let workflows: string[] = [];
   if (options.includes('githubActions')) {
     const optionChoices = WORKFLOW_OPTIONS.map((o) => {
@@ -478,6 +470,27 @@ async function main() {
       options: optionChoices,
     });
   }
+
+  // check if the user wishes to add Vitest when CI workflow is included but
+  // Vitest is not
+  if (workflows.includes('ci') && !options.includes('vitest')) {
+    const addVitest = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
+      message: warning(
+        'You have selected the CI workflow which runs the tests but not Vitest. Add Vitest?'
+      ),
+    });
+    if (addVitest) {
+      options = [...options, 'vitest'];
+    }
+  }
+
+  // 9. sort options
+  // clack/prompts MultiSelect returns the selected options in the order they
+  // are selected, but this would mess the order of the options in README.md,
+  // so we sort the options to match the order they were specified in
+  // optionChoices
+  options = sortOptions(optionChoices, options);
+  options = [...options, ...(template.projectOptions ?? [])];
 
   // 10. prompt whether the dependencies should be installed
   const installDeps = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
