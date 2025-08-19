@@ -1,5 +1,5 @@
 {
-  "name": "create-project",
+  "name": "@jariikonen/create-project",
   "private": true,
   "version": "0.0.0",
   "description": "Easily extensible project scaffolding application.",
