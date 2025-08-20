@@ -601,7 +601,7 @@ async function main() {
   );
   s.stop('Project has been tailored to match your settings.');
 
-  // 13. initialize Git if requested
+  // 14. initialize Git if requested
   const exec = promisify(execCallback);
   if (initGit) {
     try {
@@ -622,7 +622,7 @@ async function main() {
     }
   }
 
-  // 14. install dependencies if requested
+  // 15. install dependencies if requested
   let gitNeedsInitializing = options.includes('husky') && !initGit;
 
   function handleSuccess(s: SpinnerObject) {
@@ -693,7 +693,7 @@ async function main() {
     }
   }
 
-  // 15. output next steps
+  // 16. output next steps
   const projectDirPath = path.relative(process.cwd(), targetDirPath);
   const marginLength =
     projectDirPath.length < 12 ? 4 + (12 - projectDirPath.length) : 4;
