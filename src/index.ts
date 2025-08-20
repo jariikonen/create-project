@@ -468,7 +468,16 @@ async function main() {
     >(multiselect, {
       message: 'Select GH Actions workflows to add:',
       options: optionChoices,
+      required: false,
     });
+  }
+
+  // if no workflows were selected, remove githubActions from options
+  if (workflows.length === 0) {
+    const index = options.indexOf('githubActions');
+    if (index > -1) {
+      options.splice(index, 1);
+    }
   }
 
   // check if the user wishes to add Vitest or ESLint when CI workflow is
