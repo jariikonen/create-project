@@ -471,16 +471,41 @@ async function main() {
     });
   }
 
-  // check if the user wishes to add Vitest when CI workflow is included but
-  // Vitest is not
-  if (workflows.includes('ci') && !options.includes('vitest')) {
-    const addVitest = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
+  // check if the user wishes to add Vitest or ESLint when CI workflow is
+  // included but Vitest or ESLint are not
+  if (
+    workflows.includes('ci') &&
+    (!options.includes('vitest') || !options.includes('eslint'))
+  ) {
+    let optionsToOffer = !options.includes('eslint')
+      ? [
+          {
+            label: 'Add ESLint',
+            value: 'eslint',
+          },
+        ]
+      : [];
+    if (!options.includes('vitest')) {
+      optionsToOffer = [
+        ...optionsToOffer,
+        {
+          label: 'Add Vitest',
+          value: 'vitest',
+        },
+      ];
+    }
+    const selectedOptions = await prompt<
+      MultiSelectOptions<string>,
+      MultiSelectReturn<string>
+    >(multiselect, {
       message: warning(
-        'You have selected the CI workflow which runs the tests but not Vitest. Add Vitest?'
+        'CI workflow runs tests and linter. Would you like to make changes?'
       ),
+      options: optionsToOffer,
+      required: false,
     });
-    if (addVitest) {
-      options = [...options, 'vitest'];
+    if (selectedOptions) {
+      options = [...options, ...selectedOptions];
     }
   }
 
