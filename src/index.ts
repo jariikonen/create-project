@@ -468,19 +468,53 @@ async function main() {
     >(multiselect, {
       message: 'Select GH Actions workflows to add:',
       options: optionChoices,
+      required: false,
     });
   }
 
-  // check if the user wishes to add Vitest when CI workflow is included but
-  // Vitest is not
-  if (workflows.includes('ci') && !options.includes('vitest')) {
-    const addVitest = await prompt<ConfirmOptions, ConfirmReturn>(confirm, {
+  // if no workflows were selected, remove githubActions from options
+  if (workflows.length === 0) {
+    const index = options.indexOf('githubActions');
+    if (index > -1) {
+      options.splice(index, 1);
+    }
+  }
+
+  // check if the user wishes to add Vitest or ESLint when CI workflow is
+  // included but Vitest or ESLint are not
+  if (
+    workflows.includes('ci') &&
+    (!options.includes('vitest') || !options.includes('eslint'))
+  ) {
+    let optionsToOffer = !options.includes('eslint')
+      ? [
+          {
+            label: 'Add ESLint',
+            value: 'eslint',
+          },
+        ]
+      : [];
+    if (!options.includes('vitest')) {
+      optionsToOffer = [
+        ...optionsToOffer,
+        {
+          label: 'Add Vitest',
+          value: 'vitest',
+        },
+      ];
+    }
+    const selectedOptions = await prompt<
+      MultiSelectOptions<string>,
+      MultiSelectReturn<string>
+    >(multiselect, {
       message: warning(
-        'You have selected the CI workflow which runs the tests but not Vitest. Add Vitest?'
+        'CI workflow runs tests and linter. Would you like to make changes?'
       ),
+      options: optionsToOffer,
+      required: false,
     });
-    if (addVitest) {
-      options = [...options, 'vitest'];
+    if (selectedOptions) {
+      options = [...options, ...selectedOptions];
     }
   }
 
@@ -576,7 +610,7 @@ async function main() {
   );
   s.stop('Project has been tailored to match your settings.');
 
-  // 13. initialize Git if requested
+  // 14. initialize Git if requested
   const exec = promisify(execCallback);
   if (initGit) {
     try {
@@ -597,7 +631,7 @@ async function main() {
     }
   }
 
-  // 14. install dependencies if requested
+  // 15. install dependencies if requested
   let gitNeedsInitializing = options.includes('husky') && !initGit;
 
   function handleSuccess(s: SpinnerObject) {
@@ -668,7 +702,7 @@ async function main() {
     }
   }
 
-  // 15. output next steps
+  // 16. output next steps
   const projectDirPath = path.relative(process.cwd(), targetDirPath);
   const marginLength =
     projectDirPath.length < 12 ? 4 + (12 - projectDirPath.length) : 4;
