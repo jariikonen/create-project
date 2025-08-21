@@ -1,6 +1,6 @@
 {
   "name": "@jariikonen/create-project",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Easily extensible project scaffolding application.",
   "author": "Jari Ikonen",
   "license": "MIT",
