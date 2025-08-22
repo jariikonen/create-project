@@ -3,6 +3,20 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "dist/PACKAGE_NAME.umd.js",
+  "module": "dist/PACKAGE_NAME.es.js",
+  "types": "dist/PACKAGE_NAME.es.d.ts",
+  "files": [
+    "dist/PACKAGE_NAME.umd.js",
+    "dist/PACKAGE_NAME.es.js",
+    "dist/PACKAGE_NAME.es.d.ts"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/PACKAGE_NAME.es.js",
+      "require": "./dist/PACKAGE_NAME.umd.js"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
