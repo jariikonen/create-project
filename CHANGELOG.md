@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3](https://github.com/jariikonen/create-project/compare/create-project-v0.1.2...create-project-v0.1.3) (2025-08-22)
+
+
+### Bug Fixes
+
+* make configureVitest.react.ts include also @testing-library/jest-dom types in tsconfig ([7704804](https://github.com/jariikonen/create-project/commit/770480439bbb0c003ce6bfa928fbb44dc1cba1bb))
+* make configureVitest.react.ts include also @testing-library/jest… ([c93b625](https://github.com/jariikonen/create-project/commit/c93b6254bfddec435cdf8fe54f592a6c63a73e08))
+
 ## [0.1.2](https://github.com/jariikonen/create-project/compare/create-project-v0.1.1...create-project-v0.1.2) (2025-08-21)
 
 
