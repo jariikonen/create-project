@@ -6,6 +6,7 @@ import {
   SpinnerObject,
 } from '@shared/types';
 import {
+  addTypesToTsconfig,
   addVitestGlobalsToTsconfig,
   includeFileInTsconfig,
 } from '@shared/common';
@@ -52,6 +53,9 @@ export function configureVitest(
   addVitestGlobalsToTsconfig(targetDirPath, globalsTsconfig);
 
   if (options.includes('reactTestingLibrary')) {
+    const globalsTsconfigPath = path.join(targetDirPath, globalsTsconfig);
+    addTypesToTsconfig('@testing-library/jest-dom', globalsTsconfigPath);
+
     const testSetupTsconfig = additionalArgs?.testSetupTsconfig;
     if (!testSetupTsconfig) {
       s.stop(
