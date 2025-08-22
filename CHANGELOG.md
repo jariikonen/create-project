@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4](https://github.com/jariikonen/create-project/compare/create-project-v0.1.3...create-project-v0.1.4) (2025-08-22)
+
+
+### Features
+
+* add "main", "module", "types", "files" and "exports" properties to package.json of react-lib template ([cb06f0e](https://github.com/jariikonen/create-project/commit/cb06f0edaad70fea5fbafa75ff886066e1582de5))
+* add "main", "module", "types", "files" and "exports" properties… ([d5c54d5](https://github.com/jariikonen/create-project/commit/d5c54d57d6c3f34e7b9a31ee50f9792e91b73979))
+
 ## [0.1.3](https://github.com/jariikonen/create-project/compare/create-project-v0.1.2...create-project-v0.1.3) (2025-08-22)
 
 
