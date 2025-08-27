@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/jariikonen/create-project/compare/create-project-v0.1.4...create-project-v0.1.5) (2025-08-27)
+
+
+### Miscellaneous Chores
+
+* release 0.1.5 (last commit should be released) ([0fdcd6b](https://github.com/jariikonen/create-project/commit/0fdcd6ba7ef2af17220d27e048f80f1ae9877d72))
+
 ## [0.1.4](https://github.com/jariikonen/create-project/compare/create-project-v0.1.3...create-project-v0.1.4) (2025-08-22)
 
 
